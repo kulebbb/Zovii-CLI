@@ -42,6 +42,10 @@ export function register(program) {
         if (!Number.isInteger(count) || count < 1 || count > 20) {
           throw new ArgumentError('--count 必须是 1-20 的整数');
         }
+        const SIZES = ['2K', '4K'];
+        if (!SIZES.includes(opts.size)) {
+          throw new ArgumentError(`--size 只能是 ${SIZES.join(' / ')}`);
+        }
         const timeoutSec = parseInt(opts.timeout, 10);
         if (!Number.isInteger(timeoutSec) || timeoutSec <= 0) {
           throw new ArgumentError('--timeout 必须是正整数');

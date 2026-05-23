@@ -53,6 +53,7 @@ export function register(program) {
         if (!MODELS.includes(model)) {
           throw new ArgumentError(`未知模型 "${model}"，可选：${MODELS.join(' / ')}`);
         }
+        const duration = parseInt(opts.duration, 10);
         const timeoutSec = parseInt(opts.timeout, 10);
         if (!Number.isInteger(timeoutSec) || timeoutSec <= 0) {
           throw new ArgumentError('--timeout 必须是正整数');
@@ -75,9 +76,8 @@ export function register(program) {
           model_id: model,
           params: {
             prompt,
-            model_id: model,
             ratio: opts.ratio,
-            duration: opts.duration,
+            duration: duration,
             resolution: opts.resolution,
             generate_audio: opts.audio !== false,
             generation_count: 1,

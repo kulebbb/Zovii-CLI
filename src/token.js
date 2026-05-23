@@ -30,7 +30,7 @@ export async function loadAuth() {
 
 export async function saveAuth(data) {
   await mkdir(dirname(AUTH_FILE), { recursive: true });
-  await writeFile(AUTH_FILE, JSON.stringify(data, null, 2), 'utf8');
+  await writeFile(AUTH_FILE, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
 }
 
 export async function clearAuth() {
@@ -76,8 +76,8 @@ export async function refreshAccessToken(refresh_token) {
   }
   const data = await resp.json();
   const expires_at = parseJwtExp(data.access_token);
-  const auth = await loadAuth();
-  await saveAuth({ ...auth, access_token: data.access_token, expires_at });
+  const existing = (await loadAuth()) ?? {};
+  await saveAuth({ ...existing, access_token: data.access_token, expires_at });
   return data.access_token;
 }
 
