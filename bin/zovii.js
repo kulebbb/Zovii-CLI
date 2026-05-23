@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { register as registerLogin } from '../src/commands/login.js';
 import { register as registerLogout } from '../src/commands/logout.js';
 import { register as registerCreateProject } from '../src/commands/create-project.js';
+import { register as registerGenerateImage } from '../src/commands/generate-image.js';
 
 const program = new Command();
 
@@ -15,5 +16,6 @@ program
 registerLogin(program);
 registerLogout(program);
 registerCreateProject(program);
+registerGenerateImage(program);
 
 program.parse();
