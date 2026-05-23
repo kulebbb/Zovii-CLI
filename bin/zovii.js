@@ -5,6 +5,9 @@ import { register as registerLogout } from '../src/commands/logout.js';
 import { register as registerCreateProject } from '../src/commands/create-project.js';
 import { register as registerGenerateImage } from '../src/commands/generate-image.js';
 import { register as registerGenerateVideo } from '../src/commands/generate-video.js';
+import { register as registerUploadAsset } from '../src/commands/upload-asset.js';
+import { register as registerDownloadAsset } from '../src/commands/download-asset.js';
+import { register as registerListAssets } from '../src/commands/list-assets.js';
 
 const program = new Command();
 
@@ -19,5 +22,8 @@ registerLogout(program);
 registerCreateProject(program);
 registerGenerateImage(program);
 registerGenerateVideo(program);
+registerUploadAsset(program);
+registerDownloadAsset(program);
+registerListAssets(program);
 
 program.parse();
