@@ -10,6 +10,7 @@ import { register as registerDownloadAsset } from '../src/commands/download-asse
 import { register as registerListAssets } from '../src/commands/list-assets.js';
 import { register as registerRemoveBackground } from '../src/commands/remove-background.js';
 import { register as registerUpscaleVideo } from '../src/commands/upscale-video.js';
+import { register as registerListProjects } from '../src/commands/list-projects.js';
 
 const program = new Command();
 
@@ -29,5 +30,6 @@ registerDownloadAsset(program);
 registerListAssets(program);
 registerRemoveBackground(program);
 registerUpscaleVideo(program);
+registerListProjects(program);
 
 program.parse();

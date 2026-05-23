@@ -174,6 +174,11 @@ export async function createProject(token, name) {
   return project;
 }
 
+export async function listProjects(token) {
+  const data = await apiFetch('/projects', { token });
+  return Array.isArray(data) ? data : (data?.items ?? []);
+}
+
 export function assetRow(asset) {
   return {
     assetId: asset.id ?? '',
