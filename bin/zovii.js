@@ -8,6 +8,8 @@ import { register as registerGenerateVideo } from '../src/commands/generate-vide
 import { register as registerUploadAsset } from '../src/commands/upload-asset.js';
 import { register as registerDownloadAsset } from '../src/commands/download-asset.js';
 import { register as registerListAssets } from '../src/commands/list-assets.js';
+import { register as registerRemoveBackground } from '../src/commands/remove-background.js';
+import { register as registerUpscaleVideo } from '../src/commands/upscale-video.js';
 
 const program = new Command();
 
@@ -25,5 +27,7 @@ registerGenerateVideo(program);
 registerUploadAsset(program);
 registerDownloadAsset(program);
 registerListAssets(program);
+registerRemoveBackground(program);
+registerUpscaleVideo(program);
 
 program.parse();
