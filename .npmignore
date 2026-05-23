@@ -1,0 +1,10 @@
+test/
+docs/
+e2e-out/
+.claude/
+*.jpg
+*.png
+*.mp4
+*.webp
+.git/
+node_modules/
