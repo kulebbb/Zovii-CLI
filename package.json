@@ -3,11 +3,18 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Zovii Studio CLI — AI image & video generation from the command line",
-  "bin": { "zovii": "./bin/zovii.js" },
-  "files": ["bin/", "src/"],
+  "bin": {
+    "zovii": "./bin/zovii.js"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
   "dependencies": {
     "commander": "^12"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT"
 }
