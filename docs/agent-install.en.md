@@ -57,13 +57,14 @@ test -s ~/.config/zovii/auth.json && grep -q access_token ~/.config/zovii/auth.j
 ```
 
 - **`LOGGED_IN`** → continue to Step 5
-- **`NOT_LOGGED_IN`** → ask the user:
-  > "I need to log into your Zovii Studio account. Please reply with your username and password in the format `username password` (separated by a space). If you don't have an account yet, sign up at https://zovii.studio first."
+- **`NOT_LOGGED_IN`** → Log in to zovii:
 
-  When the user replies, run:
-  ```bash
-  zovii login <username> <password>
-  ```
+  1. Ask the user for their phone number (mainland China, 11 digits like 13800000000).
+  2. Run `zovii send-code <phone>` (or skip to step 3 and let the CLI auto-send the code).
+  3. Ask the user for the 6-digit code received via SMS.
+  4. Run `zovii login <phone> --code <code>`.
+  5. If the user prefers password login, run `zovii login -u <username> -p <password>`.
+
   Expect output showing `username`, `credits_balance`, and `expires_at`. If login fails (`401`/`403`), tell the user the credentials were rejected and ask them to retry or sign up.
 
 ---

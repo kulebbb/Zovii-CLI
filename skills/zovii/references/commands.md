@@ -1,20 +1,46 @@
 # zovii Command Reference
 
-All 11 commands. Global flag: `-f json` / `-f table` (default `table`).
+All 12 commands. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
-## zovii login \<username\> \<password\>
+## zovii login
 
-Authenticate with username and password. Token saved to `~/.config/zovii/auth.json`.
+登录 Zovii Studio。默认走手机号 + 验证码；保留账密兼容路径。
 
-Output columns: `username`, `credits_balance`, `expires_at`
+```bash
+zovii login                                   # 全交互
+zovii login 13800000000                       # 半交互（自动发码 + prompt 验证码）
+zovii login 13800000000 --code 123456         # 完全非交互
+zovii login -u <用户名> -p <密码>             # 账密兼容旧路
+```
+
+旧式 `zovii login <用户名> <密码>` 两位置参写法已变更，会给出迁移提示。
+
+成功后 token 保存到 `~/.config/zovii/auth.json`。
+
+输出列：`username` / `credits_balance` / `expires_at`（ISO）
 
 ---
 
 ## zovii logout
 
 Clear local token.
+
+---
+
+## zovii send-code \<phone\>
+
+单独发送手机号验证码，用于"重发"或"先发后登"场景。
+
+```bash
+zovii send-code 13800000000
+zovii send-code 13800000000 -P reset_password  # 切换 purpose（默认 login）
+```
+
+输出列：`phone` / `status`（已发送）/ `expires_in`（5 分钟）
+
+后端限流：同手机号 60 秒内只能发一次，同一日上限 10 次。
 
 ---
 

@@ -3,7 +3,7 @@ import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { AuthRequiredError, CommandError } from './errors.js';
 
-const AUTH_FILE = join(homedir(), '.config', 'zovii', 'auth.json');
+const getAuthFile = () => join(homedir(), '.config', 'zovii', 'auth.json');
 const API = 'https://zovii.studio/api/v1';
 const REFRESH_THRESHOLD = 300;
 
@@ -21,7 +21,7 @@ export function parseJwtExp(token) {
 
 export async function loadAuth() {
   try {
-    const raw = await readFile(AUTH_FILE, 'utf8');
+    const raw = await readFile(getAuthFile(), 'utf8');
     return JSON.parse(raw);
   } catch {
     return null;
@@ -29,13 +29,14 @@ export async function loadAuth() {
 }
 
 export async function saveAuth(data) {
-  await mkdir(dirname(AUTH_FILE), { recursive: true });
-  await writeFile(AUTH_FILE, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
+  const authFile = getAuthFile();
+  await mkdir(dirname(authFile), { recursive: true });
+  await writeFile(authFile, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
 }
 
 export async function clearAuth() {
   try {
-    await unlink(AUTH_FILE);
+    await unlink(getAuthFile());
   } catch {}
 }
 

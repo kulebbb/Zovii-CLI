@@ -57,14 +57,15 @@ test -s ~/.config/zovii/auth.json && grep -q access_token ~/.config/zovii/auth.j
 ```
 
 - **`LOGGED_IN`** → 进入步骤 5
-- **`NOT_LOGGED_IN`** → 向用户询问：
-  > "我需要登录你的 Zovii Studio 账号。请按 `用户名 密码` 的格式发给我（空格分隔）。如果还没有账号，先去 https://zovii.studio 注册。"
+- **`NOT_LOGGED_IN`** → 登录 zovii：
 
-  收到后执行：
-  ```bash
-  zovii login <username> <password>
-  ```
-  应该输出 `username`、`credits_balance`、`expires_at`。如果登录失败（`401`/`403`），告诉用户账密不对，让 ta 重输或注册。
+  1. 询问用户的手机号（中国大陆 11 位，如 13800000000）。
+  2. 用户告知后，执行 `zovii send-code <手机号>`（或直接进入第 3 步让 CLI 自动发码）。
+  3. 询问用户从短信收到的 6 位验证码。
+  4. 执行 `zovii login <手机号> --code <验证码>`。
+  5. 若用户更习惯账密登录，执行 `zovii login -u <用户名> -p <密码>`。
+
+  应该输出 `username`、`credits_balance`、`expires_at`。如果登录失败（`401`/`403`），告诉用户凭据不对，让 ta 重试或注册。
 
 ---
 
