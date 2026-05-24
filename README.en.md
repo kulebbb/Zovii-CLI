@@ -59,7 +59,7 @@ zovii download-asset <assetId>
 | `login <phone> [--code <code>]` | Semi-interactive / fully non-interactive login |
 | `login -u <user> -p <pass>` | Username + password login (legacy path) |
 | `logout` | Clear local token |
-| `send-code <phone>` | Send a login SMS code separately (purpose=login, valid 5 min) |
+| `send-code <phone>` | Send a login SMS code separately (valid 5 min) |
 | `list-projects` | List all projects on your account |
 | `create-project <name>` | Create a new project |
 | `list-assets <projectId>` | List assets in a project (`--type image\|video\|audio`, `--limit n`) |

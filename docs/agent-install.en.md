@@ -32,7 +32,7 @@ Verify the install:
 ```bash
 which zovii && zovii --version
 ```
-Expect output like `/usr/local/bin/zovii` and a version number (e.g. `0.1.2`). If verification fails, debug before continuing — do not proceed with broken install.
+Expect output like `/usr/local/bin/zovii` and a version number (e.g. `0.2.0`). If verification fails, debug before continuing — do not proceed with broken install.
 
 ---
 

@@ -32,7 +32,7 @@ npm install -g zovii
 ```bash
 which zovii && zovii --version
 ```
-应该输出类似 `/usr/local/bin/zovii` 和一个版本号（如 `0.1.3`）。如果验证失败，先排查再继续——不要带着坏环境往后走。
+应该输出类似 `/usr/local/bin/zovii` 和一个版本号（如 `0.2.0`）。如果验证失败，先排查再继续——不要带着坏环境往后走。
 
 ---
 

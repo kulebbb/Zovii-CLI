@@ -25,7 +25,7 @@ zovii login -u <用户名> -p <密码>             # 账密兼容旧路
 
 ## zovii logout
 
-Clear local token.
+清除本地 token。
 
 ---
 

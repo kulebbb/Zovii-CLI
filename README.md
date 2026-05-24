@@ -59,7 +59,7 @@ zovii download-asset <assetId>
 | `login <phone> [--code <code>]` | 半交互 / 完全非交互登录 |
 | `login -u <user> -p <pass>` | 账密登录（兼容旧路） |
 | `logout` | 清除本地 token |
-| `send-code <phone>` | 单独发送登录验证码（默认 purpose=login，5 分钟有效） |
+| `send-code <phone>` | 单独发送登录验证码（5 分钟有效） |
 | `list-projects` | 列出当前账号所有项目 |
 | `create-project <name>` | 新建项目 |
 | `list-assets <projectId>` | 列出项目素材（`--type image\|video\|audio`，`--limit n`） |
