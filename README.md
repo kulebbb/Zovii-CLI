@@ -81,10 +81,10 @@ Tokens are stored at `~/.config/zovii/auth.json` (mode `0600`) and refreshed aut
 
 ### AI Agent Skill
 
-This CLI ships with a [SKILL.md](skills/zovii/SKILL.md) following the [skills.sh](https://www.skills.sh) standard. AI agents (Claude Code, etc.) can install it to operate the CLI on your behalf:
+This CLI ships with a [SKILL.md](skills/zovii/SKILL.md) following the [skills.sh](https://www.skills.sh) standard. AI agents (Claude Code, Cursor, Codex, etc.) can install it to operate the CLI on your behalf:
 
 ```bash
-npx skills add zovii
+npx skills add kulebbb/Zovii-CLI
 ```
 
 ### Links
