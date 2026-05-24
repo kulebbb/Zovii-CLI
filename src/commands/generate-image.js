@@ -1,5 +1,13 @@
-import { getToken } from '../token.js';
-import { resolveAssetRefs, createTask, pollTask, resolveAssets, toRows } from '../utils.js';
+import { getToken as realGetToken } from '../token.js';
+import {
+  resolveAssetRefs as realResolveAssetRefs,
+  createTask as realCreateTask,
+  createBatchTasks as realCreateBatchTasks,
+  pollTask as realPollTask,
+  pollTasks as realPollTasks,
+  resolveAssets as realResolveAssets,
+  toRows,
+} from '../utils.js';
 import { printOutput, handleError } from '../output.js';
 import { ArgumentError } from '../errors.js';
 
@@ -16,7 +24,17 @@ const MODELS = [
 ];
 const DEFAULT_MODEL = 'ws-nano-banana-2-fast';
 
-export function register(program) {
+const realDeps = {
+  getToken: realGetToken,
+  resolveAssetRefs: realResolveAssetRefs,
+  createTask: realCreateTask,
+  createBatchTasks: realCreateBatchTasks,
+  pollTask: realPollTask,
+  pollTasks: realPollTasks,
+  resolveAssets: realResolveAssets,
+};
+
+export function register(program, deps = realDeps) {
   program
     .command('generate-image <project>')
     .description('AI 生图：文生图 / 图生图，等待并返回图片 URL')
@@ -51,32 +69,60 @@ export function register(program) {
           throw new ArgumentError('--timeout 必须是正整数');
         }
 
-        const token = await getToken();
-        const imageInput = await resolveAssetRefs(token, project, opts.imageInput, 'ai_image');
+        const token = await deps.getToken();
+        const imageInput = await deps.resolveAssetRefs(token, project, opts.imageInput, 'ai_image');
+        const sharedParams = {
+          aspect_ratio: opts.aspectRatio,
+          image_size: opts.size,
+          quality: 'medium',
+          image_input: imageInput,
+        };
 
+        if (count === 1) {
+          // 单张：走 POST /tasks
+          const payload = {
+            project_id: project,
+            tool_id: 'ai_image',
+            sub_feature_id: 'image_generation',
+            model_id: model,
+            params: { prompt, ...sharedParams },
+          };
+          const task = await deps.createTask(token, payload);
+          if (!opts.wait) {
+            printOutput(toRows(task, []), COLUMNS, fmt);
+            return;
+          }
+          const done = await deps.pollTask(token, task.id, { timeoutSec, label: 'zovii 生图' });
+          const assets = await deps.resolveAssets(token, done.result_asset_ids || []);
+          printOutput(toRows(done, assets), COLUMNS, fmt);
+          return;
+        }
+
+        // 多张：走 POST /tasks/batch，mode=multi_variation 给每个 task 注入随机 seed
         const payload = {
           project_id: project,
           tool_id: 'ai_image',
           sub_feature_id: 'image_generation',
           model_id: model,
-          params: {
-            prompt,
-            aspect_ratio: opts.aspectRatio,
-            image_size: opts.size,
-            generation_count: count,
-            quality: 'medium',
-            image_input: imageInput,
-          },
+          mode: 'multi_variation',
+          prompts: [prompt],
+          count,
+          shared_params: sharedParams,
         };
-
-        const task = await createTask(token, payload);
+        const batch = await deps.createBatchTasks(token, payload);
         if (!opts.wait) {
-          printOutput(toRows(task, []), COLUMNS, fmt);
+          const rows = batch.tasks.flatMap((t) => toRows(t, []));
+          printOutput(rows, COLUMNS, fmt);
           return;
         }
-        const done = await pollTask(token, task.id, { timeoutSec, label: 'zovii 生图' });
-        const assets = await resolveAssets(token, done.result_asset_ids || []);
-        printOutput(toRows(done, assets), COLUMNS, fmt);
+        const taskIds = batch.tasks.map((t) => t.id);
+        const dones = await deps.pollTasks(token, taskIds, { timeoutSec, label: 'zovii 批量生图' });
+        const allRows = [];
+        for (const done of dones) {
+          const assets = await deps.resolveAssets(token, done.result_asset_ids || []);
+          allRows.push(...toRows(done, assets));
+        }
+        printOutput(allRows, COLUMNS, fmt);
       } catch (err) {
         handleError(err);
       }

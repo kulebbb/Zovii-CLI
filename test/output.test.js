@@ -35,13 +35,29 @@ test('table 格式包含列标题和数据', () => {
   assert.match(out, /foo/);
 });
 
-test('table 格式截断超过 60 字符的值', () => {
-  const long = 'a'.repeat(80);
+test('table 格式截断白名单内的长字段 (fileUrl)', () => {
+  const long = 'https://example.com/' + 'a'.repeat(200);
   const out = capture(() =>
-    printOutput([{ id: long }], ['id'], 'table')
+    printOutput([{ fileUrl: long }], ['fileUrl'], 'table')
   );
-  assert.ok(!out.includes(long), '超长值应被截断');
-  assert.match(out, /aaaaaaaaaa/);
+  assert.ok(!out.includes(long), 'fileUrl 这类长 URL 应被截断');
+  assert.match(out, /https:\/\/example\.com\//);
+});
+
+test('table 格式不截断身份字段 (assetId / localPath / assetName)', () => {
+  const longPath = '/Users/test/' + 'a'.repeat(80) + '.jpg';
+  const longId = 'asset-' + 'b'.repeat(80);
+  const longName = 'name-' + 'c'.repeat(80) + '.png';
+  const out = capture(() =>
+    printOutput(
+      [{ assetId: longId, localPath: longPath, assetName: longName }],
+      ['assetId', 'localPath', 'assetName'],
+      'table',
+    ),
+  );
+  assert.ok(out.includes(longPath), 'localPath 完整保留');
+  assert.ok(out.includes(longId), 'assetId 完整保留');
+  assert.ok(out.includes(longName), 'assetName 完整保留');
 });
 
 test('table 格式跳过全为 null 的列', () => {
