@@ -1,5 +1,6 @@
 test/
 docs/
+docs/superpowers/
 e2e-out/
 .claude/
 *.jpg

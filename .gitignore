@@ -1,6 +1,9 @@
 node_modules/
 .claude/
 
+# internal AI workflow docs (specs/plans for our own brainstorming)
+docs/superpowers/
+
 # test artifacts
 e2e-out/
 /*.jpg
