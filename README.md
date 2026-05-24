@@ -166,10 +166,10 @@ Token 保存在 `~/.config/zovii/auth.json`（权限 `0600`），临过期 5 分
 
 ### AI Agent Skill
 
-仓库内附带符合 [skills.sh](https://www.skills.sh) 标准的 [SKILL.md](skills/zovii/SKILL.md)，可被 AI agent（Claude Code 等）安装后调用本 CLI：
+仓库内附带符合 [skills.sh](https://www.skills.sh) 标准的 [SKILL.md](skills/zovii/SKILL.md)，可被 AI agent（Claude Code、Cursor、Codex 等）安装后调用本 CLI：
 
 ```bash
-npx skills add zovii
+npx skills add kulebbb/Zovii-CLI
 ```
 
 ### 链接
