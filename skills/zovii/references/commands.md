@@ -4,7 +4,7 @@ All 12 commands. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
-## login
+## zovii login
 
 登录 Zovii Studio。默认走手机号 + 验证码；保留账密兼容路径。
 
@@ -23,13 +23,13 @@ zovii login -u <用户名> -p <密码>             # 账密兼容旧路
 
 ---
 
-## logout
+## zovii logout
 
 Clear local token.
 
 ---
 
-## send-code
+## zovii send-code \<phone\>
 
 单独发送手机号验证码，用于"重发"或"先发后登"场景。
 
