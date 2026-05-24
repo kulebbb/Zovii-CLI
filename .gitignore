@@ -1,0 +1,14 @@
+node_modules/
+.claude/
+
+# test artifacts
+e2e-out/
+/*.jpg
+/*.png
+/*.mp4
+/*.webp
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
