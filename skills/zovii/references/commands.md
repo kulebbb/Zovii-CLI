@@ -43,7 +43,7 @@ List assets in a project.
 | `--type` | `image` / `video` / `audio` | all types |
 | `--limit` | number | `100` |
 
-Output columns: `assetId`, `assetName`, `assetType`, `fileUrl`, `width`, `height`, `duration`
+Output columns: `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
 
 ---
 
@@ -55,7 +55,7 @@ Upload a local file as a project asset. Max size: **80 MB**.
 |--------|-------------|
 | `--tool-type` | Optional usage tag; affects server-side processing |
 
-Output columns: `assetId`, `assetName`, `assetType`, `fileUrl`
+Output columns: `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
 
 ---
 
@@ -67,7 +67,7 @@ Download an asset file to local disk.
 |--------|---------|
 | `--out <path>` | Current directory, using the asset's original filename |
 
-Output columns: `assetId`, `assetName`, `localPath`, `bytes`
+Output columns: `assetId`, `assetName`, `assetType`, `localPath`, `bytes`
 
 ---
 
@@ -86,7 +86,7 @@ Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
 | `--timeout` | seconds | `300` |
 | `--no-wait` | flag — submit and return immediately | off |
 
-Output columns: `taskId`, `status`, `creditCost`, `assetId`, `fileUrl`, `width`, `height`
+Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
 
 ---
 
@@ -111,7 +111,7 @@ Generate an AI video (text-to-video / first-last frame / reference assets).
 | `--timeout` | seconds | `600` |
 | `--no-wait` | flag — submit and return immediately | off |
 
-Output columns: `taskId`, `status`, `creditCost`, `assetId`, `fileUrl`, `duration`
+Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
 
 ---
 
@@ -126,7 +126,7 @@ Remove the background from an image; returns a transparent-background PNG.
 | `--timeout` | `300` |
 | `--no-wait` | off |
 
-Output columns: `taskId`, `status`, `creditCost`, `assetId`, `fileUrl`
+Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
 
 ---
 
@@ -143,4 +143,4 @@ Upscale a video to a higher resolution.
 | `--timeout` | seconds | `600` |
 | `--no-wait` | flag — submit and return immediately | off |
 
-Output columns: `taskId`, `status`, `creditCost`, `assetId`, `fileUrl`
+Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
