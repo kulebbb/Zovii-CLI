@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sendCode } from '../../src/auth/phone.js';
+import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { loginWithPhoneCode } from '../../src/auth/phone.js';
 
 function withFetch(handler) {
   const orig = globalThis.fetch;
@@ -72,5 +76,98 @@ test('sendCode fetch 抛异常时透传 message', async () => {
   const stub = withFetch(() => { throw new Error('ENOTFOUND'); });
   try {
     await assert.rejects(sendCode('13800000000'), /ENOTFOUND/);
+  } finally { stub.restore(); }
+});
+
+function withTmpHome() {
+  const dir = mkdtempSync(join(tmpdir(), 'zovii-test-home-'));
+  const origHome = process.env.HOME;
+  process.env.HOME = dir;
+  return {
+    dir,
+    authFile: join(dir, '.config', 'zovii', 'auth.json'),
+    restore: () => {
+      process.env.HOME = origHome;
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
+}
+
+// 一个最小 JWT（payload.exp=2000000000，HS256 header 是占位）
+const FAKE_JWT = (() => {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ sub: 'u1', exp: 2000000000 })).toString('base64url');
+  return `${header}.${payload}.fakesig`;
+})();
+
+function tokenResponse() {
+  return ok({
+    access_token: FAKE_JWT,
+    refresh_token: 'refresh-xxx',
+    token_type: 'bearer',
+    user: { id: 'u1', username: 'tester', credits_balance: 100 },
+  });
+}
+
+test('loginWithPhoneCode 成功后写 auth.json 并返回 user/expires_at', async () => {
+  const home = withTmpHome();
+  const stub = withFetch(() => tokenResponse());
+  try {
+    const result = await loginWithPhoneCode('13800000000', '123456');
+    assert.equal(stub.calls.length, 1);
+    assert.match(stub.calls[0].url, /\/auth\/phone-login$/);
+    assert.deepEqual(JSON.parse(stub.calls[0].opts.body), { phone: '13800000000', code: '123456' });
+    assert.equal(result.user.username, 'tester');
+    assert.equal(result.expires_at, 2000000000);
+    // 落盘
+    assert.equal(existsSync(home.authFile), true);
+    const saved = JSON.parse(readFileSync(home.authFile, 'utf8'));
+    assert.equal(saved.access_token, FAKE_JWT);
+    assert.equal(saved.refresh_token, 'refresh-xxx');
+    assert.equal(saved.expires_at, 2000000000);
+  } finally { stub.restore(); home.restore(); }
+});
+
+test('loginWithPhoneCode 400 抛"验证码错误或已过期"', async () => {
+  const stub = withFetch(() => fail(400, { detail: 'invalid code' }));
+  try {
+    await assert.rejects(loginWithPhoneCode('13800000000', '123456'),
+      (err) => { assert.equal(err.name, 'CommandError'); assert.match(err.message, /验证码错误或已过期/); return true; });
+  } finally { stub.restore(); }
+});
+
+test('loginWithPhoneCode 401 同上', async () => {
+  const stub = withFetch(() => fail(401, { detail: 'unauthorized' }));
+  try {
+    await assert.rejects(loginWithPhoneCode('13800000000', '123456'), /验证码错误或已过期/);
+  } finally { stub.restore(); }
+});
+
+test('loginWithPhoneCode 403 抛温和锁定提示', async () => {
+  const stub = withFetch(() => fail(403, { detail: 'locked' }));
+  try {
+    await assert.rejects(loginWithPhoneCode('13800000000', '123456'),
+      (err) => {
+        assert.equal(err.name, 'CommandError');
+        assert.match(err.message, /暂时无法登录/);
+        assert.match(err.message, /约 15 分钟/);
+        assert.doesNotMatch(err.message, /锁定|被锁|过多/);
+        return true;
+      });
+  } finally { stub.restore(); }
+});
+
+test('loginWithPhoneCode 404 抛"尚未注册"提示', async () => {
+  const stub = withFetch(() => fail(404, { detail: 'user not found' }));
+  try {
+    await assert.rejects(loginWithPhoneCode('13800000000', '123456'),
+      (err) => { assert.match(err.message, /尚未注册/); assert.match(err.message, /zovii\.studio/); return true; });
+  } finally { stub.restore(); }
+});
+
+test('loginWithPhoneCode 5xx 抛通用消息', async () => {
+  const stub = withFetch(() => fail(500, { detail: 'oops' }));
+  try {
+    await assert.rejects(loginWithPhoneCode('13800000000', '123456'), /登录失败.*HTTP 500.*oops/);
   } finally { stub.restore(); }
 });
