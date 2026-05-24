@@ -1,6 +1,6 @@
 ---
 name: zovii
-description: Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line. Triggers on: "zovii", "generate image", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video".
+description: Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video".
 ---
 
 # zovii CLI
