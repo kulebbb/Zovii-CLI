@@ -10,7 +10,21 @@ AI image & video generation from the command line, powered by [Zovii Studio](htt
 
 ---
 
-## Installation
+## 🤖 Install via Your AI Agent (Recommended)
+
+Copy this line and paste it to your AI agent (Claude Code, Cursor, Codex, Warp, etc.):
+
+```
+Install zovii CLI for me by following this runbook: https://raw.githubusercontent.com/kulebbb/Zovii-CLI/main/docs/agent-install.md
+```
+
+The agent will fetch the runbook, install the CLI, install the agent skill, walk you through login, and confirm everything works. You don't need to type any other commands.
+
+After that, just talk to your agent in plain language — "generate an image of a corgi astronaut", "list my projects", "remove the background from `./photo.jpg`", etc.
+
+---
+
+## Manual Installation
 
 ```bash
 npm install -g zovii
@@ -77,9 +91,9 @@ zovii generate-image <projectId> --prompt "..." -f json
 
 Tokens are stored at `~/.config/zovii/auth.json` (mode `0600`) and refreshed automatically when within 5 minutes of expiry. No need to log in again until your refresh token expires.
 
-## AI Agent Skill
+## Agent Skill
 
-This CLI ships with a [SKILL.md](skills/zovii/SKILL.md) following the [skills.sh](https://www.skills.sh) standard. AI agents (Claude Code, Cursor, Codex, etc.) can install it to operate the CLI on your behalf:
+The CLI ships with a [SKILL.md](skills/zovii/SKILL.md) following the [skills.sh](https://www.skills.sh) standard. The agent-install flow above sets this up automatically. To install the skill on its own (assuming the CLI is already installed):
 
 ```bash
 npx skills add kulebbb/Zovii-CLI

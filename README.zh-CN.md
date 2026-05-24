@@ -10,7 +10,21 @@
 
 ---
 
-## 安装
+## 🤖 让 AI Agent 帮你安装（推荐）
+
+复制下面这行发送给你的 AI agent（Claude Code、Cursor、Codex、Warp 等）：
+
+```
+帮我安装 zovii CLI：https://raw.githubusercontent.com/kulebbb/Zovii-CLI/main/docs/agent-install.md
+```
+
+agent 会自动 fetch 这份运行手册，依次完成：装 CLI → 装 agent skill → 引导登录 → 验证可用。你不需要再敲任何命令。
+
+装好后用自然语言就能驱动："生成一只柯基宇航员的图"、"列出我的项目"、"把 `./photo.jpg` 去掉背景" 等等。
+
+---
+
+## 手动安装
 
 ```bash
 npm install -g zovii
@@ -77,9 +91,9 @@ zovii generate-image <projectId> --prompt "..." -f json
 
 Token 保存在 `~/.config/zovii/auth.json`（权限 `0600`），临过期 5 分钟内自动刷新，无需手动重登录。
 
-## AI Agent Skill
+## Agent Skill
 
-仓库内附带符合 [skills.sh](https://www.skills.sh) 标准的 [SKILL.md](skills/zovii/SKILL.md)，可被 AI agent（Claude Code、Cursor、Codex 等）安装后调用本 CLI：
+仓库内附带符合 [skills.sh](https://www.skills.sh) 标准的 [SKILL.md](skills/zovii/SKILL.md)。上面的 agent 安装流程会自动装好它。如果 CLI 已装好，只想单独装 skill：
 
 ```bash
 npx skills add kulebbb/Zovii-CLI
