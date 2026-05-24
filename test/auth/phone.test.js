@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sendCode } from '../../src/auth/phone.js';
+import { sendCode, loginWithPhoneCode } from '../../src/auth/phone.js';
 import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loginWithPhoneCode } from '../../src/auth/phone.js';
 
 function withFetch(handler) {
   const orig = globalThis.fetch;
@@ -143,7 +142,7 @@ test('loginWithPhoneCode 401 同上', async () => {
   } finally { stub.restore(); }
 });
 
-test('loginWithPhoneCode 403 抛温和锁定提示', async () => {
+test('loginWithPhoneCode 403 抛温和的账号限制提示', async () => {
   const stub = withFetch(() => fail(403, { detail: 'locked' }));
   try {
     await assert.rejects(loginWithPhoneCode('13800000000', '123456'),
