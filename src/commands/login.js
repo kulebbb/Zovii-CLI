@@ -38,6 +38,11 @@ export function register(program, deps = realDeps) {
           throw new ArgumentError('账密登录不能与手机号或 --code 混用');
         }
 
+        // 早期拒绝：只给 --code 不给 phone（且不是 -u/-p 路径）是无意义组合
+        if (!hasPhone && hasCode) {
+          throw new ArgumentError("--code 必须配合手机号使用，请改用 'zovii login <手机号> --code <验证码>'");
+        }
+
         // 规则 1：账密旧路
         if (hasU) {
           const { user, expires_at } = await deps.loginWithPassword(options.username, options.password);
@@ -80,11 +85,10 @@ export function register(program, deps = realDeps) {
         }
 
         // 规则 4d：phone / code / -u / -p 都没给 → 全交互
-        // 或者：只给 --code 但没给 phone → prompt phone（按规则 4d 走，但 code 已知）
         const p = await deps.promptPhone();
         await deps.sendCode(p, { purpose: 'login' });
         process.stderr.write('验证码已发送，5 分钟内有效。\n');
-        const c = hasCode ? assertCode(options.code) : await deps.promptCode();
+        const c = await deps.promptCode();
         const { user, expires_at } = await deps.loginWithPhoneCode(p, c);
         printResult(user, expires_at, fmt);
       } catch (err) {

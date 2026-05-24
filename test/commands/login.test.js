@@ -181,3 +181,18 @@ test('login 单参非手机号 → ArgumentError 手机号格式（不报旧式�
     assert.doesNotMatch(io.stderr, /命令格式已变更/);
   } finally { io.restore(); }
 });
+
+test('login --code 123456（无 phone）→ ArgumentError 提示 --code 必须配合手机号', async () => {
+  const program = makeProgram({
+    loginWithPassword: async () => fakeUser(),
+    loginWithPhoneCode: async () => fakeUser(),
+    sendCode: async () => ({ ok: true }),
+    promptPhone: async () => '', promptCode: async () => '',
+  });
+  const io = captureIO();
+  try {
+    await assert.rejects(program.parseAsync(['node', 'zovii', 'login', '--code', '123456']), /__exit__/);
+    assert.match(io.stderr, /--code 必须配合手机号使用/);
+    assert.match(io.stderr, /zovii login.*--code/);
+  } finally { io.restore(); }
+});
