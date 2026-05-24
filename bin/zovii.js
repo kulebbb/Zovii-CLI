@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name('zovii')
   .description('Zovii Studio CLI — AI image & video generation from the command line')
-  .version('0.1.0')
+  .version('0.2.0')
   .option('-f, --format <fmt>', '输出格式：table / json', 'table');
 
 registerLogin(program);
