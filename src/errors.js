@@ -1,5 +1,5 @@
 export class AuthRequiredError extends Error {
-  constructor(msg = '未登录，请先运行: zovii login <username> <password>') {
+  constructor(msg = '未登录，请先运行: zovii login') {
     super(msg);
     this.name = 'AuthRequiredError';
   }

@@ -7,10 +7,12 @@ import {
   TimeoutError,
 } from '../src/errors.js';
 
-test('AuthRequiredError 有默认提示语（含 zovii login）', () => {
+test('AuthRequiredError 有默认提示语（含 zovii login，不含旧位置参）', () => {
   const err = new AuthRequiredError();
   assert.equal(err.name, 'AuthRequiredError');
   assert.match(err.message, /zovii login/);
+  assert.doesNotMatch(err.message, /<username>/);
+  assert.doesNotMatch(err.message, /<password>/);
   assert.ok(err instanceof Error);
 });
 
