@@ -1,116 +1,116 @@
-# zovii CLI — Install & Setup Runbook (for AI Agents)
+# zovii CLI — 安装与配置运行手册（给 AI Agent 看的）
 
-You are helping a user install and start using the [zovii](https://www.npmjs.com/package/zovii) CLI. Follow these steps in order. Do not skip steps. Report progress to the user after each step so they know what's happening.
+你正在帮用户安装并使用 [zovii](https://www.npmjs.com/package/zovii) CLI。请按顺序执行下面的步骤，不要跳过。每一步完成后向用户简短汇报进度，让 ta 知道你在做什么。
 
 ---
 
-## Step 1 — Check Node.js
+## 步骤 1 — 检查 Node.js
 
-Run:
+执行：
 ```bash
 node --version
 ```
 
-- **≥ v18.0.0** → continue to Step 2
-- **< v18 or `command not found`** → stop and tell the user:
-  > "zovii requires Node.js 18 or newer. Please install Node 18+ (recommended: use [nvm](https://github.com/nvm-sh/nvm) and run `nvm install 20`), then re-send your request."
+- **≥ v18.0.0** → 进入步骤 2
+- **< v18 或 `command not found`** → 停下并告诉用户：
+  > "zovii 需要 Node.js 18 或更高版本。请先安装 Node 18+（推荐用 [nvm](https://github.com/nvm-sh/nvm) 跑 `nvm install 20`），装好后重新发送请求。"
 
 ---
 
-## Step 2 — Install the CLI
+## 步骤 2 — 安装 CLI
 
-Run:
+执行：
 ```bash
 npm install -g zovii
 ```
 
-If you get `EACCES` permission denied:
-- macOS/Linux without nvm: suggest `sudo npm install -g zovii`
-- Better long-term fix: install Node via nvm so global npm packages don't need sudo
+如果遇到 `EACCES` 权限错误：
+- macOS/Linux 没装 nvm：建议 `sudo npm install -g zovii`
+- 长期来看：用 nvm 装 Node，避免全局 npm 包要 sudo
 
-Verify the install:
+验证安装：
 ```bash
 which zovii && zovii --version
 ```
-Expect output like `/usr/local/bin/zovii` and a version number (e.g. `0.1.2`). If verification fails, debug before continuing — do not proceed with broken install.
+应该输出类似 `/usr/local/bin/zovii` 和一个版本号（如 `0.1.3`）。如果验证失败，先排查再继续——不要带着坏环境往后走。
 
 ---
 
-## Step 3 — Install the Zovii Skill
+## 步骤 3 — 安装 zovii skill
 
-Run:
+执行：
 ```bash
 npx --yes skills add kulebbb/Zovii-CLI -g -y
 ```
 
-This installs the [zovii skill](https://github.com/kulebbb/Zovii-CLI/tree/main/skills/zovii) into `~/.agents/skills/zovii/`, where most agents (Claude Code, Cursor, Codex, Warp, etc.) will auto-discover it.
+这会把 [zovii skill](https://github.com/kulebbb/Zovii-CLI/tree/main/skills/zovii) 装到 `~/.agents/skills/zovii/`，大多数 agent（Claude Code、Cursor、Codex、Warp 等）会自动发现它。
 
-After this step you do **not** need to memorize the CLI surface — the skill ships a full command reference at `skills/zovii/references/commands.md` that you can read on demand.
+装完之后你不需要把 CLI 全部记下来——skill 里有完整命令参考（`skills/zovii/references/commands.md`），按需阅读即可。
 
 ---
 
-## Step 4 — Check Login Status
+## 步骤 4 — 检查登录状态
 
-Run:
+执行：
 ```bash
 test -s ~/.config/zovii/auth.json && grep -q access_token ~/.config/zovii/auth.json && echo LOGGED_IN || echo NOT_LOGGED_IN
 ```
 
-- **`LOGGED_IN`** → continue to Step 5
-- **`NOT_LOGGED_IN`** → ask the user:
-  > "I need to log into your Zovii Studio account. Please reply with your username and password in the format `username password` (separated by a space). If you don't have an account yet, sign up at https://zovii.studio first."
+- **`LOGGED_IN`** → 进入步骤 5
+- **`NOT_LOGGED_IN`** → 向用户询问：
+  > "我需要登录你的 Zovii Studio 账号。请按 `用户名 密码` 的格式发给我（空格分隔）。如果还没有账号，先去 https://zovii.studio 注册。"
 
-  When the user replies, run:
+  收到后执行：
   ```bash
   zovii login <username> <password>
   ```
-  Expect output showing `username`, `credits_balance`, and `expires_at`. If login fails (`401`/`403`), tell the user the credentials were rejected and ask them to retry or sign up.
+  应该输出 `username`、`credits_balance`、`expires_at`。如果登录失败（`401`/`403`），告诉用户账密不对，让 ta 重输或注册。
 
 ---
 
-## Step 5 — Verify Everything Works
+## 步骤 5 — 验证整体可用
 
-Run:
+执行：
 ```bash
 zovii list-projects
 ```
 
-You should see a table of the user's projects (or an empty result if they have none). If this command fails, fall back to Step 4.
+应该看到用户的项目表格（没项目就是空）。如果命令报错，回到步骤 4 检查登录。
 
 ---
 
-## Step 6 — Tell the User What's Available
+## 步骤 6 — 告诉用户能用了
 
-Send the user this exact message:
+把下面这段话原样发给用户：
 
-> ✅ **zovii CLI is installed and ready.** You can now ask me to do things like:
+> ✅ **zovii CLI 已装好，可以用了。** 现在你可以让我做这些事：
 >
-> - "Generate an image of a corgi astronaut, cinematic"
-> - "Make an 8-second video of cherry blossoms falling, slow pan"
-> - "List my projects" / "Create a project called X"
-> - "Remove the background from `./photo.jpg`"
-> - "Upload `./clip.mp4` to project X"
-> - "Upscale this video to 4K"
+> - "生成一只柯基宇航员的图，电影质感"
+> - "做一个 8 秒视频：桃花飘落，慢镜头平移"
+> - "列出我的项目" / "新建一个叫 X 的项目"
+> - "把 `./photo.jpg` 去掉背景"
+> - "把 `./clip.mp4` 上传到项目 X"
+> - "把这个视频放大到 4K"
 >
-> Local files (paths) work directly — I'll upload them for you. Just say what you want.
+> 本地文件路径直接传就行——我会帮你上传。说人话即可。
 
-Then stop and wait for the user's next request. From this point on, follow the workflows in the installed `zovii` skill for any zovii-related task.
+然后停下来等用户的下一步请求。从此以后，所有 zovii 相关的任务都按已装好的 `zovii` skill 里的 workflow 走。
 
 ---
 
-## Troubleshooting Reference
+## 故障速查
 
-| Symptom | Cause | Fix |
+| 现象 | 原因 | 处理 |
 |---|---|---|
-| `command not found: node` | Node.js not installed | Step 1 |
-| `command not found: zovii` after Step 2 | npm global bin not in PATH | Reload shell or check `npm config get prefix` |
-| `command not found: npx` | Node < 5.2 or broken install | Reinstall Node 18+ |
-| `EACCES` during `npm install -g` | Permission on system npm prefix | `sudo` or switch to nvm |
-| `登录态已失效` / `Authentication required` | Token expired or invalid | Re-run `zovii login` (Step 4) |
-| `积分不足` / `Insufficient credits` | Out of credits | Direct user to https://zovii.studio/pricing |
-| `请求过于频繁` / `Too many requests` | Rate limited | Wait 60s and retry |
-| Skill not auto-discovered by agent | Agent doesn't read `~/.agents/skills/` | Restart the agent / check agent docs |
+| `command not found: node` | 没装 Node.js | 步骤 1 |
+| 步骤 2 完成后 `command not found: zovii` | npm 全局 bin 不在 PATH | 重新 source 一下 shell 或检查 `npm config get prefix` |
+| `command not found: npx` | Node < 5.2 或环境坏了 | 重装 Node 18+ |
+| `npm install -g` 报 `EACCES` | 系统 npm prefix 没权限 | 用 `sudo` 或换成 nvm |
+| `登录态已失效` / `Authentication required` | token 过期或失效 | 重跑 `zovii login`（步骤 4） |
+| `积分不足` / `Insufficient credits` | 积分用完 | 引导用户去 https://zovii.studio/pricing |
+| `请求过于频繁` / `Too many requests` | 触发限流 | 等 60 秒再试 |
+| Skill 没被 agent 自动识别 | agent 没扫 `~/.agents/skills/` | 重启 agent / 查 agent 文档 |
 
 ---
 
-**Repo:** https://github.com/kulebbb/Zovii-CLI · **npm:** https://www.npmjs.com/package/zovii · **Studio:** https://zovii.studio
+**仓库：** https://github.com/kulebbb/Zovii-CLI · **npm：** https://www.npmjs.com/package/zovii · **Studio：** https://zovii.studio
