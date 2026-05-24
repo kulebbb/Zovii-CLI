@@ -13,7 +13,7 @@
 - **name**：`zovii`
 - **description**：Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line
 - **发布平台**：skills.sh
-- **文件位置**：独立仓库或 opencli 仓库内 `skills/zovii/SKILL.md`
+- **文件位置**：`skills/zovii/SKILL.md`（当前 opencli 仓库内）
 
 ## 3. 整体结构（三层）
 
