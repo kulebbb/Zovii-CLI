@@ -38,10 +38,19 @@ cat ~/.config/zovii/auth.json
 ```
 
 - ✅ File exists and contains `access_token` → continue
-- ❌ Missing or empty → tell the user login is required, ask for username and password, then run:
+- ❌ Missing or empty → tell the user login is required, then guide them through phone + SMS code login (default):
 
 ```bash
-zovii login <username> <password>
+zovii login                                   # interactive: prompt phone → send code → prompt code
+zovii login 13800000000                       # half-interactive: auto-send → prompt code
+zovii login 13800000000 --code 123456         # fully non-interactive
+zovii send-code 13800000000                   # send the code separately (resend or send-then-login)
+```
+
+If the user prefers password login (legacy):
+
+```bash
+zovii login -u <username> -p <password>
 ```
 
 ---

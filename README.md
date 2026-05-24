@@ -35,8 +35,8 @@ npm install -g zovii
 ## 快速开始
 
 ```bash
-# 登录（token 本地保存，自动刷新）
-zovii login <username> <password>
+# 登录（默认手机号 + 验证码；token 本地保存，自动刷新）
+zovii login
 
 # 列出项目
 zovii list-projects
@@ -55,8 +55,11 @@ zovii download-asset <assetId>
 
 | 命令 | 说明 |
 |---|---|
-| `login <username> <password>` | 账密登录，token 保存到 `~/.config/zovii/auth.json` |
+| `login` | 手机号 + 验证码交互登录（默认） |
+| `login <phone> [--code <code>]` | 半交互 / 完全非交互登录 |
+| `login -u <user> -p <pass>` | 账密登录（兼容旧路） |
 | `logout` | 清除本地 token |
+| `send-code <phone>` | 单独发送登录验证码（默认 purpose=login，5 分钟有效） |
 | `list-projects` | 列出当前账号所有项目 |
 | `create-project <name>` | 新建项目 |
 | `list-assets <projectId>` | 列出项目素材（`--type image\|video\|audio`，`--limit n`） |
@@ -86,6 +89,25 @@ zovii generate-video <projectId> --image-input ./first-frame.png --prompt "镜�
 zovii list-projects -f json
 zovii generate-image <projectId> --prompt "..." -f json
 ```
+
+## 登录方式
+
+默认走 **手机号 + 验证码**：
+
+```bash
+zovii login                                   # 全交互：输入手机号 → 收码 → 输入验证码
+zovii login 13800000000                       # 半交互：自动发码 → 输入验证码
+zovii login 13800000000 --code 123456         # 完全非交互（验证码需另行获取）
+zovii send-code 13800000000                   # 单独发码（重发或先发后登）
+```
+
+老的 **账密登录** 仍然可用：
+
+```bash
+zovii login -u <用户名> -p <密码>
+```
+
+> 注意：原 `zovii login <用户名> <密码>` 的两位置参写法已变更，CLI 会给出迁移提示。
 
 ## 登录态
 

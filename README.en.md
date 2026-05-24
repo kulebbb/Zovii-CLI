@@ -35,8 +35,8 @@ Requires **Node.js ≥ 18**. No browser dependency.
 ## Quick Start
 
 ```bash
-# Log in (token is saved locally and auto-refreshed)
-zovii login <username> <password>
+# Login (phone + SMS code by default; token cached locally and refreshed automatically)
+zovii login
 
 # List your projects
 zovii list-projects
@@ -55,8 +55,11 @@ zovii download-asset <assetId>
 
 | Command | Description |
 |---|---|
-| `login <username> <password>` | Authenticate; token saved to `~/.config/zovii/auth.json` |
+| `login` | Interactive phone + SMS code login (default) |
+| `login <phone> [--code <code>]` | Semi-interactive / fully non-interactive login |
+| `login -u <user> -p <pass>` | Username + password login (legacy path) |
 | `logout` | Clear local token |
+| `send-code <phone>` | Send a login SMS code separately (purpose=login, valid 5 min) |
 | `list-projects` | List all projects on your account |
 | `create-project <name>` | Create a new project |
 | `list-assets <projectId>` | List assets in a project (`--type image\|video\|audio`, `--limit n`) |
@@ -86,6 +89,25 @@ Default output is a table. Add `-f json` for machine-readable output:
 zovii list-projects -f json
 zovii generate-image <projectId> --prompt "..." -f json
 ```
+
+## Login methods
+
+Default is **phone + SMS code**:
+
+```bash
+zovii login                                   # interactive: prompt phone → send code → prompt code
+zovii login 13800000000                       # half-interactive: auto-send → prompt code
+zovii login 13800000000 --code 123456         # fully non-interactive
+zovii send-code 13800000000                   # send the code separately (resend or send-then-login)
+```
+
+Username + password is still supported:
+
+```bash
+zovii login -u <username> -p <password>
+```
+
+> Note: the old positional form `zovii login <username> <password>` is no longer accepted; the CLI will show a migration hint.
 
 ## Authentication
 
