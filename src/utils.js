@@ -52,6 +52,13 @@ export async function createTask(token, payload) {
   return task;
 }
 
+export async function createBatchTasks(token, payload) {
+  // POST /tasks/batch 后端接口，用于一次创建 N 个 task（多张图 / 多个 prompt 等场景）
+  const resp = await apiFetch('/tasks/batch', { method: 'POST', token, body: payload });
+  if (!resp?.tasks?.length) throw new CommandError('创建批量任务失败：响应缺少 tasks');
+  return resp;
+}
+
 export async function pollTask(token, taskId, { timeoutSec, label }) {
   const deadline = Date.now() + timeoutSec * 1000;
   while (Date.now() < deadline) {
@@ -64,6 +71,38 @@ export async function pollTask(token, taskId, { timeoutSec, label }) {
     if (task.status === 'dismissed') throw new CommandError('任务已被取消');
   }
   throw new TimeoutError(label, timeoutSec);
+}
+
+export async function pollTasks(token, taskIds, { timeoutSec, label }) {
+  // 并行轮询多个 task，全部 completed 才返回（按原顺序）；任一 failed/dismissed 立刻抛错
+  const deadline = Date.now() + timeoutSec * 1000;
+  const remaining = new Set(taskIds);
+  const results = {};
+  while (Date.now() < deadline && remaining.size > 0) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const tasks = await Promise.all(
+      [...remaining].map(async (id) => {
+        try {
+          return [id, await apiFetch(`/tasks/${id}`, { token })];
+        } catch {
+          return [id, null];
+        }
+      }),
+    );
+    for (const [id, task] of tasks) {
+      if (!task) continue;
+      if (task.status === 'completed') {
+        results[id] = task;
+        remaining.delete(id);
+      } else if (task.status === 'failed') {
+        throw new CommandError(`生成失败（task ${id}）：${task.error || '未知错误'}`);
+      } else if (task.status === 'dismissed') {
+        throw new CommandError(`任务已被取消（task ${id}）`);
+      }
+    }
+  }
+  if (remaining.size > 0) throw new TimeoutError(label, timeoutSec);
+  return taskIds.map((id) => results[id]);
 }
 
 export async function resolveAssets(token, assetIds) {

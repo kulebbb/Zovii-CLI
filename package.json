@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Zovii Studio CLI — AI image & video generation from the command line",
   "bin": {
-    "zovii": "./bin/zovii.js"
+    "zovii": "bin/zovii.js"
   },
   "files": [
     "bin/",
