@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { register as registerLogin } from '../src/commands/login.js';
 import { register as registerLogout } from '../src/commands/logout.js';
 import { register as registerCreateProject } from '../src/commands/create-project.js';
@@ -13,12 +15,16 @@ import { register as registerUpscaleVideo } from '../src/commands/upscale-video.
 import { register as registerListProjects } from '../src/commands/list-projects.js';
 import { register as registerSendCode } from '../src/commands/send-code.js';
 
+const pkg = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+);
+
 const program = new Command();
 
 program
   .name('zovii')
   .description('Zovii Studio CLI — AI image & video generation from the command line')
-  .version('0.2.0')
+  .version(pkg.version)
   .option('-f, --format <fmt>', '输出格式：table / json', 'table');
 
 registerLogin(program);
