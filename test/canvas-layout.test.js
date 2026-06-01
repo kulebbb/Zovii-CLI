@@ -7,6 +7,8 @@ import {
   listGroupsFromLayout,
   renameGroupInLayout,
   setAutoOrganizeInLayout,
+  createGroupInLayout,
+  addMembersInLayout,
 } from '../src/canvas-layout.js';
 import { ArgumentError } from '../src/errors.js';
 
@@ -81,4 +83,77 @@ test('setAutoOrganizeInLayout on→tiled / off→free', () => {
 
 test('setAutoOrganizeInLayout 找不到组抛 ArgumentError', () => {
   assert.throws(() => setAutoOrganizeInLayout(SAMPLE, 'nope', true), ArgumentError);
+});
+
+// 固定 id 生成器，保证测试确定性
+const fixedId = (() => { let n = 0; return () => `gid${++n}`; })();
+
+test('createGroupInLayout 写入成员节点(含 groupId)+追加分组+bump', () => {
+  const { layout, groupId } = createGroupInLayout(
+    { nodes: {}, groups: [], nextGroupNumber: 1 },
+    {
+      name: '我的组',
+      autoOrganize: true,
+      assetSizes: [
+        { id: 'a', width: 1000, height: 500 },
+        { id: 'b', width: 500, height: 1000 },
+      ],
+      idGen: () => 'gidX',
+    },
+  );
+  assert.equal(groupId, 'gidX');
+  assert.equal(layout.nodes['asset_a'].groupId, 'gidX');
+  assert.deepEqual(
+    { w: layout.nodes['asset_a'].width, h: layout.nodes['asset_a'].height },
+    { w: 640, h: 320 },
+  );
+  assert.equal(layout.nodes['asset_b'].groupId, 'gidX');
+  assert.equal(layout.groups.length, 1);
+  assert.equal(layout.groups[0].layoutMode, 'tiled');
+  assert.deepEqual(layout.groups[0].memberOrder, ['asset_a', 'asset_b']);
+  assert.equal(layout.groups[0].bbox, undefined);
+  assert.equal(layout.nextGroupNumber, 2);
+});
+
+test('createGroupInLayout 空成员=空组，layoutMode=free', () => {
+  const { layout } = createGroupInLayout(null, { name: '空组', idGen: fixedId });
+  assert.equal(layout.groups[0].layoutMode, 'free');
+  assert.deepEqual(layout.groups[0].memberOrder, []);
+});
+
+test('createGroupInLayout 非法颜色抛 ArgumentError', () => {
+  assert.throws(
+    () => createGroupInLayout(null, { name: 'x', color: 'pink', idGen: fixedId }),
+    ArgumentError,
+  );
+});
+
+test('createGroupInLayout 合法颜色写入 color', () => {
+  const { layout } = createGroupInLayout(null, { name: 'x', color: 'red', idGen: fixedId });
+  assert.equal(layout.groups[0].color, 'red');
+});
+
+test('addMembersInLayout 保留已有节点位置、只改 groupId，并入 memberOrder', () => {
+  const start = {
+    nodes: { asset_a: { x: 10, y: 20, width: 100, height: 100, zIndex: 5 } },
+    groups: [{ id: 'g1', name: 'g', memberOrder: ['asset_x'] }],
+    nextGroupNumber: 2,
+  };
+  const out = addMembersInLayout(start, 'g1', [{ id: 'a', width: 100, height: 100 }]);
+  assert.deepEqual(out.nodes['asset_a'], { x: 10, y: 20, width: 100, height: 100, zIndex: 5, groupId: 'g1' });
+  assert.deepEqual(out.groups[0].memberOrder, ['asset_x', 'asset_a']);
+});
+
+test('addMembersInLayout 去重不重复追加 memberOrder', () => {
+  const start = {
+    nodes: { asset_a: { x: 0, y: 0, width: 1, height: 1, zIndex: 1, groupId: 'g1' } },
+    groups: [{ id: 'g1', name: 'g', memberOrder: ['asset_a'] }],
+    nextGroupNumber: 2,
+  };
+  const out = addMembersInLayout(start, 'g1', [{ id: 'a' }]);
+  assert.deepEqual(out.groups[0].memberOrder, ['asset_a']);
+});
+
+test('addMembersInLayout 找不到组抛 ArgumentError', () => {
+  assert.throws(() => addMembersInLayout(null, 'nope', [{ id: 'a' }]), ArgumentError);
 });

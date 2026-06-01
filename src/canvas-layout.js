@@ -1,4 +1,5 @@
 import { ArgumentError } from './errors.js';
+import { randomUUID } from 'node:crypto';
 
 const NODE_TARGET = 640;
 const GAP = 24;
@@ -60,4 +61,76 @@ export function setAutoOrganizeInLayout(layout, groupId, on) {
   const layoutMode = on ? 'tiled' : 'free';
   const groups = L.groups.map((g, i) => (i === idx ? { ...g, layoutMode } : g));
   return { ...L, groups };
+}
+
+// 把资产挂到某分组：已有节点只改 groupId，新节点按网格摆放；返回 { nodes, memberNodeIds }
+function attachAssetsToGroup(nodes, groupId, assetSizes) {
+  const next = { ...nodes };
+  const allNodes = Object.values(next);
+  let bottomY = allNodes.length
+    ? Math.max(...allNodes.map((n) => (n.y ?? 0) + (n.height ?? 0))) + GAP
+    : 0;
+  let maxZ = allNodes.reduce((m, n) => Math.max(m, n.zIndex ?? 0), 0);
+
+  const memberNodeIds = [];
+  const newAssets = [];
+  for (const a of assetSizes) {
+    const nodeId = assetNodeId(a.id);
+    memberNodeIds.push(nodeId);
+    if (next[nodeId]) {
+      next[nodeId] = { ...next[nodeId], groupId };
+    } else {
+      newAssets.push(a);
+    }
+  }
+  const cols = Math.max(1, Math.ceil(Math.sqrt(newAssets.length)));
+  const cell = NODE_TARGET + GAP;
+  newAssets.forEach((a, i) => {
+    const { w, h } = computeNodeSize(a);
+    next[assetNodeId(a.id)] = {
+      x: (i % cols) * cell,
+      y: bottomY + Math.floor(i / cols) * cell,
+      width: w,
+      height: h,
+      zIndex: ++maxZ,
+      groupId,
+    };
+  });
+  return { nodes: next, memberNodeIds };
+}
+
+export function createGroupInLayout(layout, {
+  name,
+  color,
+  autoOrganize = false,
+  assetSizes = [],
+  idGen = randomUUID,
+} = {}) {
+  const L = normalizeLayout(layout);
+  if (color !== undefined && color !== '' && !GROUP_COLORS.has(color)) {
+    throw new ArgumentError(`颜色非法：${color}（可选 ${[...GROUP_COLORS].join('/')}）`);
+  }
+  const id = idGen();
+  const { nodes, memberNodeIds } = attachAssetsToGroup(L.nodes, id, assetSizes);
+  const group = {
+    id,
+    name,
+    layoutMode: autoOrganize ? 'tiled' : 'free',
+    memberOrder: memberNodeIds,
+    ...(color ? { color } : {}),
+  };
+  return {
+    layout: { nodes, groups: [...L.groups, group], nextGroupNumber: L.nextGroupNumber + 1 },
+    groupId: id,
+  };
+}
+
+export function addMembersInLayout(layout, groupId, assetSizes) {
+  const L = normalizeLayout(layout);
+  const idx = findGroupIndex(L.groups, groupId);
+  const { nodes, memberNodeIds } = attachAssetsToGroup(L.nodes, groupId, assetSizes);
+  const existing = L.groups[idx].memberOrder ?? [];
+  const merged = [...existing.filter((x) => !memberNodeIds.includes(x)), ...memberNodeIds];
+  const groups = L.groups.map((g, i) => (i === idx ? { ...g, memberOrder: merged } : g));
+  return { ...L, nodes, groups };
 }
