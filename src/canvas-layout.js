@@ -29,3 +29,35 @@ export function computeNodeSize({ width, height, type } = {}) {
   if (type === 'markdown' || type === 'pdf') return { w: 320, h: 240 };
   return { w: NODE_TARGET, h: NODE_TARGET };
 }
+
+function findGroupIndex(groups, groupId) {
+  const idx = groups.findIndex((g) => g.id === groupId);
+  if (idx === -1) throw new ArgumentError(`分组不存在：${groupId}`);
+  return idx;
+}
+
+export function listGroupsFromLayout(layout) {
+  const L = normalizeLayout(layout);
+  return L.groups.map((g) => ({
+    groupId: g.id,
+    name: g.name ?? '',
+    autoOrganize: g.layoutMode === 'tiled' ? 'on' : 'off',
+    memberCount: (g.memberOrder ?? []).length,
+    color: g.color ?? '',
+  }));
+}
+
+export function renameGroupInLayout(layout, groupId, name) {
+  const L = normalizeLayout(layout);
+  const idx = findGroupIndex(L.groups, groupId);
+  const groups = L.groups.map((g, i) => (i === idx ? { ...g, name } : g));
+  return { ...L, groups };
+}
+
+export function setAutoOrganizeInLayout(layout, groupId, on) {
+  const L = normalizeLayout(layout);
+  const idx = findGroupIndex(L.groups, groupId);
+  const layoutMode = on ? 'tiled' : 'free';
+  const groups = L.groups.map((g, i) => (i === idx ? { ...g, layoutMode } : g));
+  return { ...L, groups };
+}
