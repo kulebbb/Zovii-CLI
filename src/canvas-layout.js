@@ -74,8 +74,11 @@ function attachAssetsToGroup(nodes, groupId, assetSizes) {
 
   const memberNodeIds = [];
   const newAssets = [];
+  const seen = new Set();
   for (const a of assetSizes) {
     const nodeId = assetNodeId(a.id);
+    if (seen.has(nodeId)) continue;
+    seen.add(nodeId);
     memberNodeIds.push(nodeId);
     if (next[nodeId]) {
       next[nodeId] = { ...next[nodeId], groupId };

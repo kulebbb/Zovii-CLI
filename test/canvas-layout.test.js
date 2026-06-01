@@ -157,3 +157,28 @@ test('addMembersInLayout 去重不重复追加 memberOrder', () => {
 test('addMembersInLayout 找不到组抛 ArgumentError', () => {
   assert.throws(() => addMembersInLayout(null, 'nope', [{ id: 'a' }]), ArgumentError);
 });
+
+test('createGroupInLayout 单次调用内重复 asset id 去重', () => {
+  const { layout } = createGroupInLayout(null, {
+    name: 'dup',
+    assetSizes: [{ id: 'a' }, { id: 'a' }],
+    idGen: () => 'gidDup',
+  });
+  assert.deepEqual(layout.groups[0].memberOrder, ['asset_a']);
+});
+
+test('createGroupInLayout 多成员按网格摆放坐标正确', () => {
+  // 2 个成员 → cols=ceil(sqrt(2))=2，cell=NODE_TARGET+GAP=664，bottomY=0
+  const { layout } = createGroupInLayout(
+    { nodes: {}, groups: [], nextGroupNumber: 1 },
+    {
+      name: 'grid',
+      assetSizes: [{ id: 'a', width: 100, height: 100 }, { id: 'b', width: 100, height: 100 }],
+      idGen: () => 'gidGrid',
+    },
+  );
+  assert.equal(layout.nodes['asset_a'].x, 0);
+  assert.equal(layout.nodes['asset_a'].y, 0);
+  assert.equal(layout.nodes['asset_b'].x, 664);
+  assert.equal(layout.nodes['asset_b'].y, 0);
+});
