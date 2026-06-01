@@ -29,6 +29,10 @@ test('computeNodeSize 竖图等比缩放到 640 高', () => {
   assert.deepEqual(computeNodeSize({ width: 500, height: 1000 }), { w: 320, h: 640 });
 });
 
+test('computeNodeSize 正方形图走 >= 分支返回 640x640', () => {
+  assert.deepEqual(computeNodeSize({ width: 800, height: 800 }), { w: 640, h: 640 });
+});
+
 test('computeNodeSize 无尺寸时按类型回退', () => {
   assert.deepEqual(computeNodeSize({ type: 'video' }), { w: 640, h: 360 });
   assert.deepEqual(computeNodeSize({ type: 'markdown' }), { w: 320, h: 240 });

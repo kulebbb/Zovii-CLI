@@ -25,7 +25,7 @@ export function computeNodeSize({ width, height, type } = {}) {
       ? { w: NODE_TARGET, h: Math.round(NODE_TARGET * (height / width)) }
       : { w: Math.round(NODE_TARGET * (width / height)), h: NODE_TARGET };
   }
-  if (type === 'video') return { w: 640, h: 360 };
+  if (type === 'video') return { w: NODE_TARGET, h: 360 };
   if (type === 'markdown' || type === 'pdf') return { w: 320, h: 240 };
   return { w: NODE_TARGET, h: NODE_TARGET };
 }
