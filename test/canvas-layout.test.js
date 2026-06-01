@@ -43,14 +43,14 @@ test('computeNodeSize 无尺寸时按类型回退', () => {
   assert.deepEqual(computeNodeSize({}), { w: 640, h: 640 });
 });
 
-const SAMPLE = {
-  nodes: {},
-  groups: [
-    { id: 'g1', name: '组一', layoutMode: 'tiled', memberOrder: ['asset_a', 'asset_b'], color: 'blue' },
-    { id: 'g2', name: '组二', memberOrder: [] },
-  ],
+const SAMPLE = Object.freeze({
+  nodes: Object.freeze({}),
+  groups: Object.freeze([
+    Object.freeze({ id: 'g1', name: '组一', layoutMode: 'tiled', memberOrder: Object.freeze(['asset_a', 'asset_b']), color: 'blue' }),
+    Object.freeze({ id: 'g2', name: '组二', memberOrder: Object.freeze([]) }),
+  ]),
   nextGroupNumber: 3,
-};
+});
 
 test('listGroupsFromLayout 派生 autoOrganize 与 memberCount', () => {
   const rows = listGroupsFromLayout(SAMPLE);
