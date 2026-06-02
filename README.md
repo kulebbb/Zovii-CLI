@@ -69,8 +69,15 @@ zovii download-asset <assetId>
 | `generate-video <projectId>` | AI 文生视频 / 首尾帧 / 参考素材 |
 | `remove-background <projectId> <image>` | 图片去除背景 |
 | `upscale-video <projectId> <video>` | 视频高清放大 |
+| `list-groups <projectId>` | 列出项目的画布分组 |
+| `create-group <projectId> <name>` | 新建画布分组（`--assets id,id` 带成员，`--auto-organize` 开自动整理，`--color <c>` 颜色） |
+| `add-to-group <projectId> <groupId> --assets id,id` | 给已有分组追加成员资产 |
+| `rename-group <projectId> <groupId> <newName>` | 重命名分组 |
+| `set-auto-organize <projectId> <groupId> <on\|off>` | 开/关分组自动整理 |
 
 执行 `zovii <command> --help` 查看完整参数。
+
+> **画布分组注意事项**：分组数据存于项目画布布局，CLI 每次操作会整块读-改-写。请在该项目的网页画布**关闭时**运行这些命令，否则网页端自动保存可能覆盖 CLI 改动。开启自动整理只置标志位，真正的节点重排会在下次网页打开该分组时由前端完成。
 
 ## 本地文件直接传入
 
