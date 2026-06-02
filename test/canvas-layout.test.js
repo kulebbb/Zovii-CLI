@@ -115,6 +115,25 @@ test('createGroupInLayout 写入成员节点(含 groupId)+追加分组+bump', ()
   assert.equal(layout.nextGroupNumber, 2);
 });
 
+test('create/add 不丢失已有 nodes 与 groups', () => {
+  const existing = {
+    nodes: { asset_old: { x: 10, y: 20, width: 100, height: 100, zIndex: 5, groupId: 'g1' } },
+    groups: [{ id: 'g1', name: '老组', memberOrder: ['asset_old'] }],
+    nextGroupNumber: 2,
+  };
+  // create-group：新建组后老组与老节点原样保留
+  const { layout } = createGroupInLayout(existing, {
+    name: '新组', assetSizes: [{ id: 'new', width: 200, height: 200 }], idGen: () => 'g2',
+  });
+  assert.deepEqual(layout.nodes['asset_old'], { x: 10, y: 20, width: 100, height: 100, zIndex: 5, groupId: 'g1' });
+  assert.ok(layout.groups.find((g) => g.id === 'g1'));
+  assert.ok(layout.groups.find((g) => g.id === 'g2'));
+  // add-to-group：给 g1 加成员后老节点位置不变、其它 group 不受影响
+  const next = addMembersInLayout(existing, 'g1', [{ id: 'extra', width: 200, height: 200 }]);
+  assert.deepEqual(next.nodes['asset_old'], { x: 10, y: 20, width: 100, height: 100, zIndex: 5, groupId: 'g1' });
+  assert.equal(next.groups.length, 1);
+});
+
 test('createGroupInLayout 空成员=空组，layoutMode=free', () => {
   const { layout } = createGroupInLayout(null, { name: '空组', idGen: fixedId });
   assert.equal(layout.groups[0].layoutMode, 'free');
