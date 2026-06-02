@@ -4,7 +4,7 @@ import {
   saveCanvasLayout as realSaveCanvasLayout,
   resolveAssetSizes as realResolveAssetSizes,
 } from '../utils.js';
-import { createGroupInLayout, listGroupsFromLayout } from '../canvas-layout.js';
+import { createGroupInLayout, listGroupsFromLayout, assertGroupColor } from '../canvas-layout.js';
 import { looksLikeUuid } from '../helpers.js';
 import { printOutput, handleError } from '../output.js';
 import { ArgumentError } from '../errors.js';
@@ -37,6 +37,7 @@ export function register(program, deps = realDeps) {
       const fmt = program.opts().format;
       try {
         const assetIds = parseAssetIds(options.assets);
+        assertGroupColor(options.color);
         const token = await deps.getToken();
         const assetSizes = assetIds.length ? await deps.resolveAssetSizes(token, assetIds) : [];
         const layout = await deps.getCanvasLayout(token, projectId);

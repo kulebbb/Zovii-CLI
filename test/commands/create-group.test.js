@@ -25,17 +25,22 @@ test('create-group 带成员：保存的布局含分组与成员节点', async (
   const saved = [];
   const deps = baseDeps({ saveCanvasLayout: async (_t, _p, layout) => { saved.push(layout); return { ok: true }; } });
   const program = makeProgram(deps);
+  const origStdout = process.stdout.write.bind(process.stdout);
   process.stdout.write = () => true;
-  await program.parseAsync([
-    'node', 'zovii', 'create-group', 'proj1', '我的组',
-    '--assets', '11111111-1111-1111-1111-111111111111', '--auto-organize',
-  ]);
-  assert.equal(saved.length, 1);
-  const g = saved[0].groups[0];
-  assert.equal(g.name, '我的组');
-  assert.equal(g.layoutMode, 'tiled');
-  assert.equal(g.memberOrder.length, 1);
-  assert.ok(saved[0].nodes['asset_11111111-1111-1111-1111-111111111111'].groupId);
+  try {
+    await program.parseAsync([
+      'node', 'zovii', 'create-group', 'proj1', '我的组',
+      '--assets', '11111111-1111-1111-1111-111111111111', '--auto-organize',
+    ]);
+    assert.equal(saved.length, 1);
+    const g = saved[0].groups[0];
+    assert.equal(g.name, '我的组');
+    assert.equal(g.layoutMode, 'tiled');
+    assert.equal(g.memberOrder.length, 1);
+    assert.ok(saved[0].nodes['asset_11111111-1111-1111-1111-111111111111'].groupId);
+  } finally {
+    process.stdout.write = origStdout;
+  }
 });
 
 test('create-group 非法 asset id 抛 ArgumentError 且不保存', async () => {
@@ -64,8 +69,49 @@ test('create-group 不带成员：建空组', async () => {
   const saved = [];
   const deps = baseDeps({ saveCanvasLayout: async (_t, _p, layout) => { saved.push(layout); return {}; } });
   const program = makeProgram(deps);
+  const origStdout = process.stdout.write.bind(process.stdout);
   process.stdout.write = () => true;
-  await program.parseAsync(['node', 'zovii', 'create-group', 'proj1', '空组']);
-  assert.equal(saved[0].groups[0].memberOrder.length, 0);
-  assert.equal(saved[0].groups[0].layoutMode, 'free');
+  try {
+    await program.parseAsync(['node', 'zovii', 'create-group', 'proj1', '空组']);
+    assert.equal(saved[0].groups[0].memberOrder.length, 0);
+    assert.equal(saved[0].groups[0].layoutMode, 'free');
+  } finally {
+    process.stdout.write = origStdout;
+  }
+});
+
+test('create-group 非法 --color 抛错且不保存', async () => {
+  const saved = [];
+  const deps = baseDeps({ saveCanvasLayout: async () => { saved.push(1); return {}; } });
+  const program = makeProgram(deps);
+  const origExit = process.exit;
+  const origStderr = process.stderr.write.bind(process.stderr);
+  let stderrBuf = '';
+  process.stderr.write = (s) => { stderrBuf += s; return true; };
+  process.exit = () => { throw new Error('__exit__'); };
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'create-group', 'proj1', 'g', '--color', 'pink']),
+      /__exit__/,
+    );
+    assert.match(stderrBuf, /颜色非法/);
+    assert.equal(saved.length, 0);
+  } finally {
+    process.exit = origExit;
+    process.stderr.write = origStderr;
+  }
+});
+
+test('create-group 合法 --color 写入 group.color', async () => {
+  const saved = [];
+  const deps = baseDeps({ saveCanvasLayout: async (_t, _p, layout) => { saved.push(layout); return {}; } });
+  const program = makeProgram(deps);
+  const origStdout = process.stdout.write.bind(process.stdout);
+  process.stdout.write = () => true;
+  try {
+    await program.parseAsync(['node', 'zovii', 'create-group', 'proj1', 'g', '--color', 'red']);
+    assert.equal(saved[0].groups[0].color, 'red');
+  } finally {
+    process.stdout.write = origStdout;
+  }
 });

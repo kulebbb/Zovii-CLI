@@ -19,6 +19,12 @@ export function assetNodeId(assetId) {
   return `asset_${assetId}`;
 }
 
+export function assertGroupColor(color) {
+  if (color !== undefined && color !== '' && !GROUP_COLORS.has(color)) {
+    throw new ArgumentError(`颜色非法：${color}（可选 ${[...GROUP_COLORS].join('/')}）`);
+  }
+}
+
 // 复刻前端 studioHelpers.computeNodeSize：有尺寸等比缩放到 640，否则按类型回退
 export function computeNodeSize({ width, height, type } = {}) {
   if (width > 0 && height > 0) {
@@ -110,9 +116,7 @@ export function createGroupInLayout(layout, {
   idGen = randomUUID,
 } = {}) {
   const L = normalizeLayout(layout);
-  if (color !== undefined && color !== '' && !GROUP_COLORS.has(color)) {
-    throw new ArgumentError(`颜色非法：${color}（可选 ${[...GROUP_COLORS].join('/')}）`);
-  }
+  assertGroupColor(color);
   const id = idGen();
   const { nodes, memberNodeIds } = attachAssetsToGroup(L.nodes, id, assetSizes);
   const group = {
