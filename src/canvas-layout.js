@@ -3,6 +3,10 @@ import { randomUUID } from 'node:crypto';
 
 const NODE_TARGET = 640;
 const GAP = 24;
+// 复刻前端 handleCreateEmptyGroup 的空组默认尺寸（240x160）；
+// 空组若不写 bbox，前端 computeGroupBbox 返回 null、容器被隐藏而看不到。
+const EMPTY_GROUP_W = 240;
+const EMPTY_GROUP_H = 160;
 const GROUP_COLORS = new Set([
   'blue', 'green', 'orange', 'purple', 'red', 'yellow', 'cyan', 'gray',
 ]);
@@ -69,13 +73,19 @@ export function setAutoOrganizeInLayout(layout, groupId, on) {
   return { ...L, groups };
 }
 
+// 现有节点的底边 + GAP，作为新内容的起始 y（空画布为 0）
+function bottomOf(nodes) {
+  const all = Object.values(nodes);
+  return all.length
+    ? Math.max(...all.map((n) => (n.y ?? 0) + (n.height ?? 0))) + GAP
+    : 0;
+}
+
 // 把资产挂到某分组：已有节点只改 groupId，新节点按网格摆放；返回 { nodes, memberNodeIds }
 function attachAssetsToGroup(nodes, groupId, assetSizes) {
   const next = { ...nodes };
   const allNodes = Object.values(next);
-  let bottomY = allNodes.length
-    ? Math.max(...allNodes.map((n) => (n.y ?? 0) + (n.height ?? 0))) + GAP
-    : 0;
+  let bottomY = bottomOf(next);
   let maxZ = allNodes.reduce((m, n) => Math.max(m, n.zIndex ?? 0), 0);
 
   const memberNodeIds = [];
@@ -119,11 +129,16 @@ export function createGroupInLayout(layout, {
   assertGroupColor(color);
   const id = idGen();
   const { nodes, memberNodeIds } = attachAssetsToGroup(L.nodes, id, assetSizes);
+  // 空组必须自带 bbox 才能在前端显示（有成员时省略，交前端从成员推导）
+  const emptyBbox = memberNodeIds.length === 0
+    ? { bbox: { x: 0, y: bottomOf(L.nodes), w: EMPTY_GROUP_W, h: EMPTY_GROUP_H } }
+    : {};
   const group = {
     id,
     name,
     layoutMode: autoOrganize ? 'tiled' : 'free',
     memberOrder: memberNodeIds,
+    ...emptyBbox,
     ...(color ? { color } : {}),
   };
   return {

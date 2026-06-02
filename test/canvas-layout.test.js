@@ -140,6 +140,14 @@ test('createGroupInLayout 空成员=空组，layoutMode=free', () => {
   assert.deepEqual(layout.groups[0].memberOrder, []);
 });
 
+test('createGroupInLayout 空组写默认 240x160 bbox（否则前端不渲染）', () => {
+  const { layout } = createGroupInLayout(null, { name: '空组', idGen: fixedId });
+  const { bbox } = layout.groups[0];
+  assert.ok(bbox, '空组必须带 bbox');
+  assert.equal(bbox.w, 240);
+  assert.equal(bbox.h, 160);
+});
+
 test('createGroupInLayout 非法颜色抛 ArgumentError', () => {
   assert.throws(
     () => createGroupInLayout(null, { name: 'x', color: 'pink', idGen: fixedId }),
