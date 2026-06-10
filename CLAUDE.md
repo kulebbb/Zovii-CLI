@@ -6,7 +6,7 @@
 - 入口：`bin/zovii.js`（`package.json` 的 `bin.zovii` 指向它）
 - npm 包名：`zovii` · 维护账号：`kulebbb`
 - 远端：`https://github.com/kulebbb/Zovii-CLI`
-- 后端是独立仓库（Python/FastAPI，不在本仓库），具体路径与接口 schema 见 user memory `zovii-cli-status.md`
+- 本项目是 zovii.studio 的命令行客户端，**自身无后端**；CLI 调用的服务接口属于 zovii.studio 产品，接口 schema 见 user memory `zovii-cli-status.md`
 
 ## 发版
 

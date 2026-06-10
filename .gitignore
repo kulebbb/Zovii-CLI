@@ -6,6 +6,7 @@ docs/superpowers/
 
 # test artifacts
 e2e-out/
+temp/
 /*.jpg
 /*.png
 /*.mp4
