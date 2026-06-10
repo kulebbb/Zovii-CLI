@@ -242,3 +242,34 @@ export function toRows(task, assets) {
   }
   return assets.map((asset) => ({ ...base, ...assetRow(asset) }));
 }
+
+export async function getCanvasLayout(token, projectId) {
+  // 空布局时后端返回 null；归一化交给 canvas-layout.js
+  return apiFetch(`/projects/${projectId}/canvas-layout`, { token });
+}
+
+export async function saveCanvasLayout(token, projectId, layout) {
+  return apiFetch(`/projects/${projectId}/canvas-layout`, {
+    method: 'PATCH',
+    token,
+    body: {
+      nodes: layout.nodes ?? {},
+      groups: layout.groups ?? [],
+      nextGroupNumber: layout.nextGroupNumber ?? 1,
+    },
+  });
+}
+
+// 拉取资产尺寸用于节点计算；单个失败回退为 { id }（computeNodeSize 会用默认尺寸）
+export async function resolveAssetSizes(token, assetIds) {
+  const out = [];
+  for (const id of assetIds) {
+    try {
+      const a = await getAsset(token, id);
+      out.push({ id, width: a?.metadata?.width, height: a?.metadata?.height, type: a?.type });
+    } catch {
+      out.push({ id });
+    }
+  }
+  return out;
+}

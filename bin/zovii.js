@@ -14,6 +14,11 @@ import { register as registerRemoveBackground } from '../src/commands/remove-bac
 import { register as registerUpscaleVideo } from '../src/commands/upscale-video.js';
 import { register as registerListProjects } from '../src/commands/list-projects.js';
 import { register as registerSendCode } from '../src/commands/send-code.js';
+import { register as registerListGroups } from '../src/commands/list-groups.js';
+import { register as registerCreateGroup } from '../src/commands/create-group.js';
+import { register as registerAddToGroup } from '../src/commands/add-to-group.js';
+import { register as registerRenameGroup } from '../src/commands/rename-group.js';
+import { register as registerSetAutoOrganize } from '../src/commands/set-auto-organize.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -39,5 +44,10 @@ registerRemoveBackground(program);
 registerUpscaleVideo(program);
 registerListProjects(program);
 registerSendCode(program);
+registerListGroups(program);
+registerCreateGroup(program);
+registerAddToGroup(program);
+registerRenameGroup(program);
+registerSetAutoOrganize(program);
 
 program.parse();

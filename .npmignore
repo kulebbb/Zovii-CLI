@@ -2,6 +2,7 @@ test/
 docs/
 docs/superpowers/
 e2e-out/
+temp/
 .claude/
 *.jpg
 *.png
