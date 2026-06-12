@@ -66,6 +66,7 @@ zovii download-asset <assetId>
 | `upload-asset <projectId> <file>` | 上传本地文件为项目 asset（上限 80 MB） |
 | `download-asset <assetId>` | 下载素材到本地（`--out <path>` 指定路径） |
 | `generate-image <projectId> --prompt <text>` | AI 文生图 / 图生图 |
+| `batch-generate-image <projectId> --prompt <a> --prompt <b>` | 批量文生图：多个不同 prompt 一次提交，每条生成 1 张（上限 20 条） |
 | `generate-video <projectId>` | AI 文生视频 / 首尾帧 / 参考素材 |
 | `remove-background <projectId> <image>` | 图片去除背景 |
 | `upscale-video <projectId> <video>` | 视频高清放大 |
