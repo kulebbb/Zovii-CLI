@@ -1,6 +1,6 @@
 ---
 name: zovii
-description: Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video".
+description: Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video".
 ---
 
 # zovii CLI
@@ -79,6 +79,23 @@ These rules apply to every command:
 5. Wait → display fileUrl
 6. Ask if user wants to download → yes: zovii download-asset <assetId>
 ```
+
+### Workflow 1b: Batch Generate Image
+
+```
+1. Confirm project → if unknown, run: zovii list-projects, let user pick
+2. Collect: at least one --prompt (required); up to 20 --prompt flags, one image each
+3. Ask (optional): model, aspect ratio, shared reference image (--image-input, max 10), size
+4. Run: zovii batch-generate-image <projectId> --prompt "..." --prompt "..." [options]
+5. Wait → display fileUrls for all generated images
+6. Ask if user wants to download any → yes: zovii download-asset <assetId>
+```
+
+Models (4 only): `ws-nano-banana-2-fast` (default), `doubao-seedream-4-5-251128`, `doubao-seedream-5-0-260128`, `midjourney-fast`
+
+Optional shared flags: `--image-input` (max 10), `--aspect-ratio`, `--size`, `--no-wait`
+
+Full options: [references/commands.md](references/commands.md)
 
 ### Workflow 2: Generate Video
 

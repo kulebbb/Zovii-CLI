@@ -66,6 +66,7 @@ zovii download-asset <assetId>
 | `upload-asset <projectId> <file>` | Upload a local file as a project asset (≤ 80 MB) |
 | `download-asset <assetId>` | Download an asset to local disk (`--out <path>`) |
 | `generate-image <projectId> --prompt <text>` | Text-to-image / image-to-image |
+| `batch-generate-image <projectId> --prompt <a> --prompt <b>` | Batch text-to-image: submit multiple different prompts at once, one image each (max 20) |
 | `generate-video <projectId>` | Text-to-video / first-last-frame / reference-based video |
 | `remove-background <projectId> <image>` | Remove background from an image |
 | `upscale-video <projectId> <video>` | Upscale a video to higher resolution |
