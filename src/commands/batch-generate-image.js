@@ -76,10 +76,11 @@ export function register(program, deps = realDeps) {
 
         const token = await deps.getToken();
         const imageInput = await deps.resolveAssetRefs(token, project, opts.imageInput, 'ai_image');
-        // payload 与 web 端 Studio 提交「批量图像」工具的字段完全一致
+        // tool_id 必须是 ai_image：服务端 provider 工厂未注册 batch_image，
+        // 发 batch_image 会 generation_failed（registry.py 只注册了 ai_image 通道）
         const payload = {
           project_id: project,
-          tool_id: 'batch_image',
+          tool_id: 'ai_image',
           sub_feature_id: 'batch_text_to_image',
           model_id: opts.model,
           mode: 'multi_prompt',

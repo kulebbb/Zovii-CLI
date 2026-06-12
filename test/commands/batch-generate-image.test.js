@@ -177,7 +177,7 @@ test('--image-input 超过 10 个 → ArgumentError', async () => {
   } finally { io.restore(); }
 });
 
-test('payload 与 web 批量图像工具完全一致（tool_id/sub_feature_id/mode/prompts/count）', async () => {
+test('payload 走 ai_image 通道的 batch_text_to_image（tool_id/sub_feature_id/mode/prompts/count）', async () => {
   const { deps, calls } = fakeDeps();
   const program = makeProgram(deps);
   const io = captureIO();
@@ -192,7 +192,8 @@ test('payload 与 web 批量图像工具完全一致（tool_id/sub_feature_id/mo
     assert.equal(calls.createBatchTasks.length, 1, '应调 createBatchTasks 一次');
     const p = calls.createBatchTasks[0];
     assert.equal(p.project_id, 'proj-1');
-    assert.equal(p.tool_id, 'batch_image');
+    // 必须是 ai_image：服务端 provider 工厂未注册 batch_image，发 batch_image 会 generation_failed
+    assert.equal(p.tool_id, 'ai_image');
     assert.equal(p.sub_feature_id, 'batch_text_to_image');
     assert.equal(p.mode, 'multi_prompt');
     assert.equal(p.model_id, 'ws-nano-banana-2-fast', '默认模型');
