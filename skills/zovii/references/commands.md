@@ -116,6 +116,24 @@ Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `asset
 
 ---
 
+## zovii batch-generate-image \<projectId\>
+
+Batch text-to-image: submit multiple different prompts in one call; each prompt generates one image (matches the web "Batch Image Generation" tool). `--prompt` is repeatable.
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `--prompt` | text, repeatable (1–20 prompts) | **required** |
+| `--model` | `ws-nano-banana-2-fast` / `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `midjourney-fast` | `ws-nano-banana-2-fast` |
+| `--aspect-ratio` | `1:1` / `2:3` / `3:2` / `3:4` / `4:3` / `4:5` / `5:4` / `9:16` / `16:9` / `21:9` | `1:1` |
+| `--size` | `2K` / `4K` | `2K` |
+| `--image-input` | asset ID or local path; comma-separated, max 10, shared across all prompts | — |
+| `--timeout` | seconds | `300` |
+| `--no-wait` | flag — submit and return immediately | off |
+
+Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
+
+---
+
 ## zovii generate-video \<projectId\>
 
 Generate an AI video (text-to-video / first-last frame / reference assets).
