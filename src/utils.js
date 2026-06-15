@@ -207,10 +207,18 @@ export async function downloadAsset(asset, outPath) {
   return { localPath: outPath, bytes: buf.length };
 }
 
-export async function createProject(token, name) {
-  const project = await apiFetch('/projects', { method: 'POST', token, body: { name } });
+export async function createProject(token, name, { personalProject } = {}) {
+  const body = { name };
+  // personal_project=true → 个人项目；false → 企业成员盖企业戳。仅在显式给出时传，否则用后端默认
+  if (personalProject !== undefined) body.personal_project = personalProject;
+  const project = await apiFetch('/projects', { method: 'POST', token, body });
   if (!project?.id) throw new CommandError('新建项目失败：响应缺少 project id');
   return project;
+}
+
+// 当前用户信息（含 enterprise_id：非空即企业成员）
+export async function getMe(token) {
+  return apiFetch('/auth/me', { token });
 }
 
 export async function listProjects(token) {

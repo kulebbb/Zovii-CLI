@@ -56,7 +56,13 @@ Output columns: `projectId`, `projectName`, `createdAt`, `updatedAt`
 
 Create a new project. Returns the new project ID.
 
-Output columns: `projectId`, `projectName`, `createdAt`
+Defaults to a personal project. Enterprise members are asked (in an interactive terminal) to choose personal or enterprise; non-enterprise users skip the prompt and always get a personal project. Pass `--type` to skip the prompt (useful for scripts).
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `--type` | `personal` / `enterprise` | `personal` |
+
+Output columns: `projectId`, `projectName`, `enterpriseId`, `createdAt`
 
 ---
 

@@ -61,7 +61,7 @@ zovii download-asset <assetId>
 | `logout` | Clear local token |
 | `send-code <phone>` | Send a login SMS code separately (valid 5 min) |
 | `list-projects` | List all projects on your account |
-| `create-project <name>` | Create a new project |
+| `create-project <name>` | Create a new project (personal by default; enterprise members can pass `--type personal\|enterprise`, prompted in an interactive terminal) |
 | `list-assets <projectId>` | List assets in a project (`--type image\|video\|audio`, `--limit n`) |
 | `upload-asset <projectId> <file>` | Upload a local file as a project asset (≤ 80 MB) |
 | `download-asset <assetId>` | Download an asset to local disk (`--out <path>`) |
