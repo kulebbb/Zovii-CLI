@@ -61,7 +61,7 @@ zovii download-asset <assetId>
 | `logout` | 清除本地 token |
 | `send-code <phone>` | 单独发送登录验证码（5 分钟有效） |
 | `list-projects` | 列出当前账号所有项目 |
-| `create-project <name>` | 新建项目 |
+| `create-project <name>` | 新建项目（默认个人项目；企业成员可 `--type personal\|enterprise`，交互终端会询问） |
 | `list-assets <projectId>` | 列出项目素材（`--type image\|video\|audio`，`--limit n`） |
 | `upload-asset <projectId> <file>` | 上传本地文件为项目 asset（上限 80 MB） |
 | `download-asset <assetId>` | 下载素材到本地（`--out <path>` 指定路径） |
