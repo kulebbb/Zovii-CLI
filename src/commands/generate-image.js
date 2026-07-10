@@ -13,16 +13,15 @@ import { ArgumentError } from '../errors.js';
 
 const COLUMNS = ['taskId', 'status', 'creditCost', 'assetId', 'assetName', 'assetType', 'fileUrl', 'thumbnailUrl', 'width', 'height', 'duration'];
 const MODELS = [
-  'ws-nano-banana-2-fast',
-  'ws-nano-banana-2',
   'ws-nano-banana-pro',
   'ws-nano-banana-pro-ultra',
   'doubao-seedream-4-5-251128',
   'doubao-seedream-5-0-260128',
+  'doubao-seedream-5-0-pro-260628',
   'midjourney-fast',
   'ws-gpt-image-2',
 ];
-const DEFAULT_MODEL = 'ws-nano-banana-2-fast';
+const DEFAULT_MODEL = 'ws-nano-banana-pro';
 
 const realDeps = {
   getToken: realGetToken,

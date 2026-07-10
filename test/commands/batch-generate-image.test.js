@@ -196,7 +196,7 @@ test('payload 走 ai_image 通道的 batch_text_to_image（tool_id/sub_feature_i
     assert.equal(p.tool_id, 'ai_image');
     assert.equal(p.sub_feature_id, 'batch_text_to_image');
     assert.equal(p.mode, 'multi_prompt');
-    assert.equal(p.model_id, 'ws-nano-banana-2-fast', '默认模型');
+    assert.equal(p.model_id, 'doubao-seedream-4-5-251128', '默认模型');
     assert.deepEqual(p.prompts, ['赛博朋克城市夜景', '雪山下的湖泊', '森林里的木屋'], '顺序保持、逐条 trim');
     assert.equal(p.count, 3, 'count = prompts.length（对齐 web 语义）');
     assert.equal(p.shared_params.aspect_ratio, '3:4');
