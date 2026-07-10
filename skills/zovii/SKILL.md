@@ -91,7 +91,7 @@ These rules apply to every command:
 6. Ask if user wants to download any → yes: zovii download-asset <assetId>
 ```
 
-Models (4 only): `ws-nano-banana-2-fast` (default), `doubao-seedream-4-5-251128`, `doubao-seedream-5-0-260128`, `midjourney-fast`
+Models (3 only): `doubao-seedream-4-5-251128` (default), `doubao-seedream-5-0-260128`, `midjourney-fast`
 
 Optional shared flags: `--image-input` (max 10), `--aspect-ratio`, `--size`, `--no-wait`
 

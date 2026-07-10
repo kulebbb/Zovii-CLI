@@ -10,14 +10,13 @@ import { printOutput, handleError } from '../output.js';
 import { ArgumentError } from '../errors.js';
 
 const COLUMNS = ['taskId', 'status', 'creditCost', 'assetId', 'assetName', 'assetType', 'fileUrl', 'thumbnailUrl', 'width', 'height', 'duration'];
-// 与 zovii.studio「批量图像」工具（batch_image）web 表单一致，仅 4 个模型
+// 与 zovii.studio「批量图像」工具（batch_image）web 表单可见模型一致
 const MODELS = [
-  'ws-nano-banana-2-fast',
   'doubao-seedream-4-5-251128',
   'doubao-seedream-5-0-260128',
   'midjourney-fast',
 ];
-const DEFAULT_MODEL = 'ws-nano-banana-2-fast';
+const DEFAULT_MODEL = 'doubao-seedream-4-5-251128';
 const RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
 const SIZES = ['2K', '4K'];
 const MAX_PROMPTS = 20;
