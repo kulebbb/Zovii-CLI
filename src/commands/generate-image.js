@@ -17,6 +17,7 @@ const MODELS = [
   'ws-nano-banana-pro-ultra',
   'doubao-seedream-4-5-251128',
   'doubao-seedream-5-0-260128',
+  'doubao-seedream-5-0-pro-260628',
   'midjourney-fast',
   'ws-gpt-image-2',
 ];

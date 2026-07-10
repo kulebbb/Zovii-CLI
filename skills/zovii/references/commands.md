@@ -110,7 +110,7 @@ Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text | **required** |
-| `--model` | `ws-nano-banana-pro` / `ws-nano-banana-pro-ultra` / `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `midjourney-fast` / `ws-gpt-image-2` | `ws-nano-banana-pro` |
+| `--model` | `ws-nano-banana-pro` / `ws-nano-banana-pro-ultra` / `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-pro-260628` / `midjourney-fast` / `ws-gpt-image-2` | `ws-nano-banana-pro` |
 | `--aspect-ratio` | `1:1` / `2:3` / `3:2` / `3:4` / `4:3` / `4:5` / `5:4` / `9:16` / `16:9` / `21:9` | `1:1` |
 | `--size` | `2K` / `4K` | `2K` |
 | `--count` | 1–20 | `1` |
@@ -129,7 +129,7 @@ Batch text-to-image: submit multiple different prompts in one call; each prompt 
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text, repeatable (1–20 prompts) | **required** |
-| `--model` | `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `midjourney-fast` | `doubao-seedream-4-5-251128` |
+| `--model` | `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-pro-260628` / `midjourney-fast` | `doubao-seedream-4-5-251128` |
 | `--aspect-ratio` | `1:1` / `2:3` / `3:2` / `3:4` / `4:3` / `4:5` / `5:4` / `9:16` / `16:9` / `21:9` | `1:1` |
 | `--size` | `2K` / `4K` | `2K` |
 | `--image-input` | asset ID or local path; comma-separated, max 10, shared across all prompts | — |
@@ -147,7 +147,7 @@ Generate an AI video (text-to-video / first-last frame / reference assets).
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text | empty |
-| `--model` | `doubao-seedance-2-0-260128` / `doubao-seedance-2-0-fast-260128` / `doubao-seedance-1-5-pro-251215` / `kling-o3` / `ws-veo-3.1` | `doubao-seedance-2-0-260128` |
+| `--model` | `doubao-seedance-2-0-260128` / `doubao-seedance-2-0-fast-260128` / `doubao-seedance-2-0-mini-260615` / `doubao-seedance-1-5-pro-251215` / `kling-o3` / `ws-veo-3.1` / `grok-imagine-video-v1.5` | `doubao-seedance-2-0-260128` |
 | `--ratio` | `16:9` / `9:16` / `1:1` / `4:3` / `3:4` / `21:9` | `16:9` |
 | `--duration` | `8` / `12` | `8` |
 | `--resolution` | `480p` / `720p` / `1080p` | `720p` |
