@@ -1,6 +1,6 @@
 ---
 name: zovii
-description: Use when the user wants to generate AI images or videos, manage assets, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video".
+description: Use when the user wants to generate AI images or videos, manage assets, organize canvas groups, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video", "canvas group", "画布分组".
 ---
 
 # zovii CLI
@@ -13,6 +13,7 @@ Load this skill when the user mentions:
 - "zovii", "generate image", "generate video", "AI image/video generation"
 - "upload asset", "download asset", "project assets"
 - "remove background", "upscale video", "upscale"
+- "canvas group", "画布分组", "分组整理资产"
 
 Full command reference: [references/commands.md](references/commands.md)
 
@@ -157,3 +158,18 @@ Agent notes:
 4. Run: zovii upscale-video <projectId> <video> --resolution <res>
 5. Wait → display fileUrl → ask if user wants to download
 ```
+
+### Workflow 5: Canvas Group Management
+
+```
+List groups:        zovii list-groups <projectId>
+Create group:       zovii create-group <projectId> <name> [--assets id1,id2] [--auto-organize] [--color <color>]
+Add members:        zovii add-to-group <projectId> <groupId> --assets id1,id2
+Rename group:       zovii rename-group <projectId> <groupId> <newName>
+Auto-organize:      zovii set-auto-organize <projectId> <groupId> on|off
+```
+
+Agent notes:
+- `--assets` only accepts asset IDs (UUID), not local paths — upload first if needed.
+- No group ID? Run `zovii list-groups <projectId>` first and let the user pick.
+- Colors: blue / green / orange / purple / red / yellow / cyan / gray.

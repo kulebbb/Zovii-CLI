@@ -1,6 +1,6 @@
 # zovii Command Reference
 
-All 12 commands. Global flag: `-f json` / `-f table` (default `table`).
+All 18 commands. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
@@ -162,6 +162,56 @@ Generate an AI video (text-to-video / first-last frame / reference assets).
 | `--no-wait` | flag — submit and return immediately | off |
 
 Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
+
+---
+
+## zovii list-groups \<projectId\>
+
+列出项目的画布分组（id / 名字 / 自动整理状态 / 成员数）。
+
+Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
+
+---
+
+## zovii create-group \<projectId\> \<name\>
+
+新建画布分组，可选带成员资产 / 直接开自动整理。
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `--assets` | 逗号分隔的 asset id（UUID），作为初始成员 | — |
+| `--auto-organize` | flag — 创建时即开启自动整理（layoutMode=tiled） | off |
+| `--color` | `blue` / `green` / `orange` / `purple` / `red` / `yellow` / `cyan` / `gray` | — |
+
+Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
+
+---
+
+## zovii add-to-group \<projectId\> \<groupId\>
+
+给已有画布分组追加成员资产。
+
+| Option | Description |
+|--------|-------------|
+| `--assets` | 逗号分隔的 asset id（UUID），**必填**，至少一个 |
+
+Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
+
+---
+
+## zovii rename-group \<projectId\> \<groupId\> \<newName\>
+
+重命名画布分组。
+
+Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
+
+---
+
+## zovii set-auto-organize \<projectId\> \<groupId\> \<state\>
+
+开/关画布分组的自动整理。`state` 只接受 `on` / `off`。
+
+Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
 
 ---
 
