@@ -61,6 +61,7 @@ zovii download-asset <assetId>
 | `logout` | 清除本地 token |
 | `send-code <phone>` | 单独发送登录验证码（5 分钟有效） |
 | `list-projects` | 列出当前账号所有项目 |
+| `list-models [tool]` | 列出产品当前可用的工具 / 模型及其可选参数（`--refresh` 强制刷新缓存） |
 | `create-project <name>` | 新建项目（默认个人项目；企业成员可 `--type personal\|enterprise`，交互终端会询问） |
 | `list-assets <projectId>` | 列出项目素材（`--type image\|video\|audio`，`--limit n`） |
 | `upload-asset <projectId> <file>` | 上传本地文件为项目 asset（上限 80 MB） |
@@ -77,6 +78,10 @@ zovii download-asset <assetId>
 | `set-auto-organize <projectId> <groupId> <on\|off>` | 开/关分组自动整理 |
 
 执行 `zovii <command> --help` 查看完整参数。
+
+可用模型及其参数取值（`--model`、`--aspect-ratio`、`--size`、`--ratio`、`--duration`、`--resolution` 等）由 zovii.studio 的产品配置在运行时拉取并本地缓存 1 小时，CLI 不再内置任何模型白名单。运行 `zovii list-models ai_image` / `zovii list-models ai_video` 查看当前可用取值；不传对应参数即使用该模型的默认值。
+
+> 生图默认分辨率随产品默认走（当前默认模型 `ws-nano-banana-pro` 为 `1k`），旧版本 CLI 固定发 2K。需要 2K 请显式传 `--size 2k`（字段名随模型而异，以 `zovii list-models ai_image` 为准）。
 
 > **画布分组注意事项**：分组数据存于项目画布布局，CLI 每次操作会整块读-改-写。请在该项目的网页画布**关闭时**运行这些命令，否则网页端自动保存可能覆盖 CLI 改动。开启自动整理只置标志位，真正的节点重排会在下次网页打开该分组时由前端完成。
 

@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
 import { register } from '../../src/commands/batch-generate-image.js';
+
+// 线上真实 GET /api/v1/tools 响应快照，测试全程不联网
+const FIXTURE_TOOLS = JSON.parse(
+  readFileSync(new URL('../fixtures/tools.json', import.meta.url), 'utf8'),
+);
 
 function captureIO() {
   const origExit = process.exit;
@@ -47,6 +53,7 @@ function fakeDeps(overrides = {}) {
     resolveAssetRefs: [], createBatchTasks: [], pollTasks: [], resolveAssets: [],
   };
   const deps = {
+    getToolsConfig: async () => FIXTURE_TOOLS,
     getToken: async () => 'fake-token',
     resolveAssetRefs: async (token, project, refsCsv) => {
       calls.resolveAssetRefs.push(refsCsv);
@@ -116,21 +123,31 @@ test('--prompt 21 条 → ArgumentError', async () => {
   } finally { io.restore(); }
 });
 
-test('模型白名单：generate-image 可用但 batch 不可用的模型 → 报错', async () => {
-  // web「批量图像」工具仅 4 模型，ws-gpt-image-2 / ws-nano-banana-pro 都不在内
+test('模型清单跟随产品配置：ai_image 全部模型都可用于批量', async () => {
   for (const m of ['ws-gpt-image-2', 'ws-nano-banana-pro']) {
-    const { deps } = fakeDeps();
+    const { deps, calls } = fakeDeps();
     const program = makeProgram(deps);
     const io = captureIO();
     try {
-      await assert.rejects(
-        program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
-          '--prompt', 'x', '--model', m]),
-        /__exit__/,
-      );
-      assert.match(io.stderr, /未知模型/);
+      await program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+        '--prompt', 'x', '--model', m]);
+      assert.equal(calls.createBatchTasks[0].model_id, m);
     } finally { io.restore(); }
   }
+});
+
+test('未知模型 → 报错并列出可选模型', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'no-such-model']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /未知模型 "no-such-model"/);
+  } finally { io.restore(); }
 });
 
 test('--aspect-ratio 非法值 → ArgumentError', async () => {
@@ -143,7 +160,7 @@ test('--aspect-ratio 非法值 → ArgumentError', async () => {
         '--prompt', 'x', '--aspect-ratio', '7:5']),
       /__exit__/,
     );
-    assert.match(io.stderr, /--aspect-ratio 只能是/);
+    assert.match(io.stderr, /--aspect-ratio 不支持 "7:5"/);
   } finally { io.restore(); }
 });
 
@@ -157,7 +174,7 @@ test('--size 非法值 → ArgumentError', async () => {
         '--prompt', 'x', '--size', '8K']),
       /__exit__/,
     );
-    assert.match(io.stderr, /--size 只能是/);
+    assert.match(io.stderr, /--size 不支持 "8K"/);
   } finally { io.restore(); }
 });
 
@@ -172,7 +189,7 @@ test('--image-input 超过 10 个 → ArgumentError', async () => {
         '--prompt', 'x', '--image-input', refs]),
       /__exit__/,
     );
-    assert.match(io.stderr, /--image-input 最多 10 张/);
+    assert.match(io.stderr, /--image-input 最多 10 个/);
     assert.equal(calls.resolveAssetRefs.length, 0, '校验应在解析/上传之前');
   } finally { io.restore(); }
 });
@@ -186,6 +203,7 @@ test('payload 走 ai_image 通道的 batch_text_to_image（tool_id/sub_feature_i
       '--prompt', '赛博朋克城市夜景',
       '--prompt', '  雪山下的湖泊  ',
       '--prompt', '森林里的木屋',
+      '--model', 'doubao-seedream-4-5-251128',
       '--aspect-ratio', '3:4',
       '--size', '4K',
     ]);
@@ -196,12 +214,14 @@ test('payload 走 ai_image 通道的 batch_text_to_image（tool_id/sub_feature_i
     assert.equal(p.tool_id, 'ai_image');
     assert.equal(p.sub_feature_id, 'batch_text_to_image');
     assert.equal(p.mode, 'multi_prompt');
-    assert.equal(p.model_id, 'doubao-seedream-4-5-251128', '默认模型');
+    assert.equal(p.model_id, 'doubao-seedream-4-5-251128');
     assert.deepEqual(p.prompts, ['赛博朋克城市夜景', '雪山下的湖泊', '森林里的木屋'], '顺序保持、逐条 trim');
     assert.equal(p.count, 3, 'count = prompts.length（对齐 web 语义）');
     assert.equal(p.shared_params.aspect_ratio, '3:4');
-    assert.equal(p.shared_params.image_size, '4K');
-    assert.equal(p.shared_params.quality, 'medium');
+    // seedream 的字段名是 size，不应再恒发 image_size
+    assert.equal(p.shared_params.size, '4K');
+    assert.ok(!('image_size' in p.shared_params));
+    assert.ok(!('quality' in p.shared_params), 'seedream 无 quality 字段，不应硬编码');
     assert.ok(!('prompt' in p.shared_params), 'shared_params 不应包含 prompt');
     // 等待路径：轮询 3 个 task，逐 task 解析 asset，输出 3 行
     assert.equal(calls.pollTasks.length, 1);
@@ -226,7 +246,7 @@ test('空白 prompt 被过滤，仅提交非空项', async () => {
   } finally { io.restore(); }
 });
 
-test('指定 4 模型内的合法模型 → 透传到 payload', async () => {
+test('指定合法模型 → 透传到 payload', async () => {
   const { deps, calls } = fakeDeps();
   const program = makeProgram(deps);
   const io = captureIO();
@@ -249,5 +269,44 @@ test('--no-wait → 不轮询，直接输出 N 个 taskId', async () => {
     const out = JSON.parse(io.stdout);
     assert.equal(out.length, 2, '输出 2 行（每个 task 1 行）');
     assert.equal(out[0].taskId, 'task-1');
+  } finally { io.restore(); }
+});
+
+test('默认模型跟随产品配置（ai_image 默认 ws-nano-banana-pro）', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1', '--prompt', 'x']);
+    assert.equal(calls.createBatchTasks[0].model_id, 'ws-nano-banana-pro');
+    assert.equal(calls.createBatchTasks[0].shared_params.image_size, '1k', '未传 --size 用模型默认值');
+  } finally { io.restore(); }
+});
+
+test('midjourney-fast 带 --image-input → 报错（该模型无参考图字段）', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'midjourney-fast', '--image-input', 'asset-1']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /不支持 --image-input/);
+    assert.equal(calls.resolveAssetRefs.length, 0, '校验应在上传之前');
+  } finally { io.restore(); }
+});
+
+test('预估积分 = 单张估价加附加费再乘条数', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    // seedream-4-5 单张 1.5 + batch_text_to_image 附加 0.5，共 3 条 → 6
+    await program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+      '--model', 'doubao-seedream-4-5-251128',
+      '--prompt', 'a', '--prompt', 'b', '--prompt', 'c']);
+    assert.match(io.stderr, /预估消耗 6 积分/);
   } finally { io.restore(); }
 });

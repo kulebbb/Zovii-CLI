@@ -34,3 +34,22 @@ cat $(npm root -g)/zovii/package.json | grep version
   ```bash
   npm cache clean --force && npm install -g zovii@latest
   ```
+
+## 4. 模型配置运行时拉取
+
+生图 / 生视频命令不再内置模型白名单和参数枚举，全部来自 `GET https://zovii.studio/api/v1/tools`：
+
+- 实现：`src/tools-config.js`（`getToolsConfig` / `findTool` / `findModel` / `getDefaultModel` / `resolveFields` / `matchOption` / `createParams` / `estimateCost` / `estimateTotal`）
+- 缓存路径：`~/.config/zovii/tools-cache.json`，结构 `{ fetched_at, tools }`
+- TTL：1 小时；`zovii list-models --refresh` 强制刷新；拉取失败且有缓存时降级用缓存并在 stderr 提示
+- 参数解析口径：模型 `sub_feature_form_schemas` 优先，再用 `field_overrides` 浅覆盖（与产品前端一致）。字段 `visible === false` 或不存在时用户显式传参 → 报错；用户不传则回填 `default`（`null` 则不下发）
+- 分辨率字段名随模型而异（`image_size` 或 `size`），只能发存在的那一个，否则 seedream 的 4K 会被静默降级
+- 行为变更：生图默认分辨率现在随产品默认走（当前默认模型 `ws-nano-banana-pro` 的默认值是 `1k`），旧版本 CLI 固定发 2K。用户想要 2K 必须显式传 `--size 2k`；改动前先确认这条不会被误当成回归
+
+测试全部走本地快照，不联网。更新快照：
+
+```bash
+curl https://zovii.studio/api/v1/tools > test/fixtures/tools.json
+```
+
+更新后跑 `npm test`：若断言（默认模型、枚举取值、预估积分）失败，说明产品配置有变，按新配置调整测试而不是改回硬编码。

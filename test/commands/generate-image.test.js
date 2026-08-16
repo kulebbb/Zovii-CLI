@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
 import { register } from '../../src/commands/generate-image.js';
+
+// 线上真实 GET /api/v1/tools 响应快照，测试全程不联网
+const FIXTURE_TOOLS = JSON.parse(
+  readFileSync(new URL('../fixtures/tools.json', import.meta.url), 'utf8'),
+);
 
 function captureIO() {
   const origExit = process.exit;
@@ -45,10 +51,15 @@ function fakeAsset(id) {
 function fakeDeps(overrides = {}) {
   const calls = {
     createTask: [], createBatchTasks: [], pollTask: [], pollTasks: [], resolveAssets: [],
+    resolveAssetRefs: [],
   };
   const deps = {
+    getToolsConfig: async () => FIXTURE_TOOLS,
     getToken: async () => 'fake-token',
-    resolveAssetRefs: async () => [],
+    resolveAssetRefs: async (token, project, refsCsv) => {
+      calls.resolveAssetRefs.push(refsCsv);
+      return String(refsCsv ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+    },
     createTask: async (token, payload) => {
       calls.createTask.push(payload);
       return { id: 'task-1', status: 'pending', credit_cost: 1, result_asset_ids: [] };
@@ -119,7 +130,7 @@ test('count=1 → 走 POST /tasks（createTask），payload 字段名对得上�
       '--prompt', '一只猫',
       '--model', 'ws-nano-banana-pro',
       '--aspect-ratio', '3:4',
-      '--size', '4K',
+      '--size', '2K',
       '--count', '1',
     ]);
     assert.equal(calls.createTask.length, 1, '应调 createTask 一次');
@@ -131,7 +142,8 @@ test('count=1 → 走 POST /tasks（createTask），payload 字段名对得上�
     assert.equal(p.model_id, 'ws-nano-banana-pro');
     assert.equal(p.params.prompt, '一只猫');
     assert.equal(p.params.aspect_ratio, '3:4');
-    assert.equal(p.params.image_size, '4K');
+    // schema 里 nano-banana-pro 的枚举是小写 1k/2k，落库要用规范值
+    assert.equal(p.params.image_size, '2k');
     // 关键：单任务路径不再带 generation_count（后端不识别这个字段）
     assert.ok(!('generation_count' in p.params), 'params 不应包含 generation_count');
     // pollTask 被调用一次
@@ -192,5 +204,143 @@ test('count=1 + --no-wait → 不轮询，直接输出 taskId', async () => {
     ]);
     assert.equal(calls.createTask.length, 1);
     assert.equal(calls.pollTask.length, 0, '不应轮询');
+  } finally { io.restore(); }
+});
+
+test('未传 --model → 用产品默认模型 ws-nano-banana-pro', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1', '--prompt', 'x']);
+    assert.equal(calls.createTask[0].model_id, 'ws-nano-banana-pro');
+  } finally { io.restore(); }
+});
+
+test('未知模型 → 报错并列出可选模型', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'no-such-model']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /未知模型 "no-such-model"/);
+    assert.match(io.stderr, /doubao-seedream-4-5-251128/);
+  } finally { io.restore(); }
+});
+
+test('seedream --size 4K → 发 size 字段，不发 image_size', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', 'x', '--model', 'doubao-seedream-4-5-251128', '--size', '4K']);
+    const p = calls.createTask[0].params;
+    assert.equal(p.size, '4K');
+    assert.ok(!('image_size' in p), '不应再恒发 image_size（否则 4K 会被静默降级）');
+  } finally { io.restore(); }
+});
+
+test('nano-banana-pro --size 4K → 报错并列出 1k / 2k', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'ws-nano-banana-pro', '--size', '4K']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /--size 不支持 "4K"/);
+    assert.match(io.stderr, /1k \/ 2k/);
+  } finally { io.restore(); }
+});
+
+test('midjourney-fast 带 --image-input → 报错（该模型无参考图字段）', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'midjourney-fast', '--image-input', 'asset-1']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /不支持 --image-input/);
+    assert.equal(calls.resolveAssetRefs.length, 0, '校验应在上传之前');
+  } finally { io.restore(); }
+});
+
+test('--image-input 超过 max_count（10）→ 报错且不上传', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  const refs = Array.from({ length: 11 }, (_, i) => `ref${i}`).join(',');
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+        '--prompt', 'x', '--image-input', refs]),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /--image-input 最多 10 个/);
+    assert.equal(calls.resolveAssetRefs.length, 0);
+  } finally { io.restore(); }
+});
+
+test('gpt-image-2 --quality high 通过；seedream --quality high 报错', async () => {
+  const ok = fakeDeps();
+  let program = makeProgram(ok.deps);
+  let io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', 'x', '--model', 'ws-gpt-image-2', '--quality', 'high']);
+    assert.equal(ok.calls.createTask[0].params.quality, 'high');
+  } finally { io.restore(); }
+
+  const bad = fakeDeps();
+  program = makeProgram(bad.deps);
+  io = captureIO();
+  try {
+    await assert.rejects(
+      program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+        '--prompt', 'x', '--model', 'doubao-seedream-4-5-251128', '--quality', 'high']),
+      /__exit__/,
+    );
+    assert.match(io.stderr, /不支持 --quality/);
+  } finally { io.restore(); }
+});
+
+test('不再硬编码 quality=medium：nano-banana-pro 的 payload 不含 quality', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1', '--prompt', 'x']);
+    assert.ok(!('quality' in calls.createTask[0].params));
+  } finally { io.restore(); }
+});
+
+test('提交前把预估积分打到 stderr', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1', '--prompt', 'x']);
+    assert.match(io.stderr, /预估消耗 5.5 积分/);
+  } finally { io.restore(); }
+});
+
+test('count=3 时预估积分按张数累计', async () => {
+  const { deps } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', 'x', '--count', '3']);
+    assert.match(io.stderr, /预估消耗 16.5 积分/);
   } finally { io.restore(); }
 });
