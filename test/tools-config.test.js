@@ -70,6 +70,18 @@ test('resolveFields: gpt-image-2 走 field_overrides 覆盖基础 schema', () =>
   assert.equal(normalizeOptions(fields.get('aspect_ratio').options)[0], 'auto');
 });
 
+test('resolveFields: gpt-image-2 的 aspect_ratio 带出 autoValueWhen 规则', () => {
+  const fields = resolveFields(imgTool(), 'image_generation', 'ws-gpt-image-2');
+  assert.deepEqual(fields.get('aspect_ratio').autoValueWhen, {
+    source_field: 'image_input',
+    condition: 'not_empty',
+    value: 'auto',
+  });
+  // 没有该规则的模型字段上应为 null，避免下游误判
+  const nano = resolveFields(imgTool(), 'image_generation', 'ws-nano-banana-pro');
+  assert.equal(nano.get('aspect_ratio').autoValueWhen, null);
+});
+
 test('resolveFields: midjourney-fast 既无 image_size 也无 size', () => {
   const fields = resolveFields(imgTool(), 'image_generation', 'midjourney-fast');
   assert.equal(fields.has('image_size'), false);

@@ -73,6 +73,8 @@ export function resolveFields(tool, subFeatureId, modelId) {
       default: ov.default ?? field.default,
       visible: visible !== false,
       maxCount: ov.max_count ?? field.max_count ?? null,
+      // 动态默认值规则：源字段非空时该字段改用 auto_value_when.value（产品前端 useResolvedFields 语义）
+      autoValueWhen: ov.auto_value_when ?? field.auto_value_when ?? null,
       // field_overrides.required 可以把基础 schema 的 required 覆盖掉
       required: ov.required ?? field.required === true,
     });
@@ -89,12 +91,26 @@ export function matchOption(field, value) {
   return options.find((opt) => opt.toLowerCase() === s.toLowerCase()) ?? null;
 }
 
+// auto_value_when 的 not_empty 判定：空字符串 / 空数组 / null / undefined 都算空
+function isNotEmpty(value) {
+  if (value === undefined || value === null || value === '') return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
 // 按模型 schema 组装任务参数：未传的字段回填 schema 默认值，传了的字段按 schema 校验
 export function createParams(model, fields) {
   const params = {};
   const unsupported = (label) => new ArgumentError(`模型 ${model.id} 不支持 ${label}`);
+  // 用户没显式传值时的回填：优先命中 auto_value_when 动态默认值，否则用 schema 静态 default
   const fillDefault = (key, field) => {
-    if (field && field.default !== null && field.default !== undefined) params[key] = field.default;
+    if (!field) return;
+    const rule = field.autoValueWhen;
+    if (rule?.condition === 'not_empty' && isNotEmpty(params[rule.source_field])) {
+      params[key] = rule.value;
+      return;
+    }
+    if (field.default !== null && field.default !== undefined) params[key] = field.default;
   };
   return {
     params,

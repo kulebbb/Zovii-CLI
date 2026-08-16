@@ -70,12 +70,13 @@ export function register(program, deps = realDeps) {
         const fields = resolveFields(tool, SUB_FEATURE_ID, model.id);
 
         const builder = createParams(model, fields);
-        builder.option('aspect_ratio', opts.aspectRatio, '--aspect-ratio');
-        // 分辨率字段名随模型而异：image_size 或 size，只发其中存在的那一个
-        builder.option(fields.has('image_size') ? 'image_size' : 'size', opts.size, '--size');
+        // image_input 必须先写入 params：aspect_ratio 的 auto_value_when 依赖它判断非空
         // 先按 schema 校验参考图数量，再上传，避免白传
         const refs = splitRefs(opts.imageInput);
         builder.input('image_input', refs, '--image-input');
+        builder.option('aspect_ratio', opts.aspectRatio, '--aspect-ratio');
+        // 分辨率字段名随模型而异：image_size 或 size，只发其中存在的那一个
+        builder.option(fields.has('image_size') ? 'image_size' : 'size', opts.size, '--size');
 
         const token = await deps.getToken();
         if (refs.length) {
