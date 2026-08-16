@@ -61,6 +61,7 @@ zovii download-asset <assetId>
 | `logout` | Clear local token |
 | `send-code <phone>` | Send a login SMS code separately (valid 5 min) |
 | `list-projects` | List all projects on your account |
+| `list-models [tool]` | List the tools / models the product currently offers and their options (`--refresh` to bypass the cache) |
 | `create-project <name>` | Create a new project (personal by default; enterprise members can pass `--type personal\|enterprise`, prompted in an interactive terminal) |
 | `list-assets <projectId>` | List assets in a project (`--type image\|video\|audio`, `--limit n`) |
 | `upload-asset <projectId> <file>` | Upload a local file as a project asset (≤ 80 MB) |
@@ -72,6 +73,10 @@ zovii download-asset <assetId>
 | `upscale-video <projectId> <video>` | Upscale a video to higher resolution |
 
 Run `zovii <command> --help` for full option lists.
+
+Available models and their parameter values (`--model`, `--aspect-ratio`, `--size`, `--ratio`, `--duration`, `--resolution`, …) are fetched from the zovii.studio product config at runtime and cached locally for 1 hour — the CLI ships no model whitelist. Run `zovii list-models ai_image` / `zovii list-models ai_video` to see what is currently available; omit an option to use the model's own default.
+
+> Image generation now follows the product default resolution (currently `1k` for the default model `ws-nano-banana-pro`); older CLI versions always sent 2K. Pass `--size 2k` explicitly if you need 2K (the field name varies per model — check `zovii list-models ai_image`).
 
 ## Local Files as Input
 

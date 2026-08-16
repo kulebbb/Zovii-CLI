@@ -65,6 +65,7 @@ These rules apply to every command:
 - **Waiting for results?** Default: wait (omit `--no-wait`). Only go async when the user explicitly requests it.
 - **Output format?** Default: `table`. Add `-f json` when the output will be consumed programmatically.
 - **Timeouts?** Image tasks default to 300 s; video tasks default to 600 s. Use `--timeout <seconds>` for long-running jobs.
+- **Which model / which `--size` / `--duration`?** 不要凭记忆猜。模型清单与各参数取值由 zovii.studio 产品配置动态下发，运行 `zovii list-models ai_image` 或 `zovii list-models ai_video` 查看（`--refresh` 强制刷新缓存）。省略参数即使用该模型的默认值。
 
 ---
 
@@ -92,7 +93,7 @@ These rules apply to every command:
 6. Ask if user wants to download any → yes: zovii download-asset <assetId>
 ```
 
-Models (4 only): `doubao-seedream-4-5-251128` (default), `doubao-seedream-5-0-260128`, `doubao-seedream-5-0-pro-260628`, `midjourney-fast`
+Models: 由产品配置动态决定（不再限定 4 个模型）。运行 `zovii list-models ai_image` 查看当前可用模型与参数取值；不传 `--model` 即用产品默认模型。
 
 Optional shared flags: `--image-input` (max 10), `--aspect-ratio`, `--size`, `--no-wait`
 
@@ -127,6 +128,16 @@ Choose the variant that matches what the user described:
 4. Run: zovii generate-video <projectId> --ref-* <ref> [--prompt "..."]
 5. Wait → display fileUrl → ask if user wants to download
 ```
+
+### Workflow 2b: Inspect Available Models
+
+```
+zovii list-models                  # 所有工具 + 各自默认模型
+zovii list-models ai_image         # 生图模型：modelId / name / default / minCost / options
+zovii list-models ai_video         # 生视频模型
+```
+
+`options` 列是各模型可选枚举参数的紧凑摘要（`*` 标默认值）。当用户问"有哪些模型/能出 4K 吗/最长几秒"时，先跑这条命令再回答。
 
 ### Workflow 3: Asset Management
 

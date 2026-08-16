@@ -4,10 +4,18 @@ import { basename, dirname } from 'node:path';
 import { ArgumentError, AuthRequiredError, CommandError, TimeoutError } from './errors.js';
 import { isLocalFilePath, guessMimeType, looksLikeUuid } from './helpers.js';
 
-const API = 'https://zovii.studio/api/v1';
+export const API = 'https://zovii.studio/api/v1';
 const MAX_UPLOAD_BYTES = 80 * 1024 * 1024;
 
-function throwHttpError(status, context = '') {
+// 后端 400 的业务错误码 → 面向用户的中文说明
+const DETAIL_CODE_MESSAGES = {
+  model_not_available:
+    '该模型不支持所选参数组合（模型/分辨率/时长），运行 zovii list-models <tool> 查看可用取值',
+  prompt_required: '该模型要求提供提示词 --prompt',
+  duration_unavailable: '该模型不支持所选时长',
+};
+
+export function throwHttpError(status, context = '', detail) {
   if (status >= 200 && status < 300) return;
   if (status === 401 || status === 403) {
     throw new AuthRequiredError('登录态已失效，请重新运行 zovii login');
@@ -21,24 +29,52 @@ function throwHttpError(status, context = '') {
   if (status === 429) {
     throw new CommandError('请求过于频繁，请稍后重试');
   }
+  if (status === 400 && detail) {
+    if (typeof detail === 'string') {
+      throw new CommandError(`请求失败：${detail}`);
+    }
+    if (detail.code) {
+      // 未知 code 时把后端 message 一并带出，便于用户自查
+      const extra = detail.message ? `：${detail.message}` : '';
+      const err = new CommandError(
+        DETAIL_CODE_MESSAGES[detail.code] ?? `请求失败：${detail.code}${extra}`,
+      );
+      err.code = detail.code;
+      throw err;
+    }
+    // 非 code 结构（如字段校验数组）原样截断透出，避免只剩 HTTP 400
+    if (typeof detail === 'object') {
+      throw new CommandError(`请求失败：${JSON.stringify(detail).slice(0, 200)}`);
+    }
+  }
   throw new CommandError(`请求失败：HTTP ${status}${context ? ` (${context})` : ''}`);
 }
 
-async function apiFetch(path, { method = 'GET', token, body, timeoutMs = 20000 } = {}) {
+export async function apiFetch(
+  path,
+  { method = 'GET', token, body, timeoutMs = 20000, fetchImpl = fetch } = {},
+) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const headers = { Accept: 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
-    const resp = await fetch(`${API}${path}`, {
+    const resp = await fetchImpl(`${API}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });
-    throwHttpError(resp.status, path);
+    // 先读 body，让后端 {detail:{code}} 能透传给用户，而不是只剩 HTTP 4xx
     const text = await resp.text();
+    if (resp.status < 200 || resp.status >= 300) {
+      let detail;
+      try {
+        detail = JSON.parse(text).detail;
+      } catch {}
+      throwHttpError(resp.status, path, detail);
+    }
     if (!text.trim()) return null;
     return JSON.parse(text);
   } finally {

@@ -1,8 +1,11 @@
 {
   "name": "zovii",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "type": "module",
   "description": "Zovii Studio CLI — AI image & video generation from the command line",
+  "scripts": {
+    "test": "node --test"
+  },
   "bin": {
     "zovii": "bin/zovii.js"
   },

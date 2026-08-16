@@ -1,6 +1,6 @@
 # zovii Command Reference
 
-All 18 commands. Global flag: `-f json` / `-f table` (default `table`).
+All 19 commands. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
@@ -103,6 +103,29 @@ Output columns: `assetId`, `assetName`, `assetType`, `localPath`, `bytes`
 
 ---
 
+## zovii list-models [tool]
+
+列出产品当前可用的工具与模型。模型清单、可选参数和默认值都由 zovii.studio 的产品配置动态下发（本地缓存 1 小时），所以生图/生视频命令不再内置任何模型白名单。
+
+> 注意：生图默认分辨率随产品默认走（当前默认模型 `ws-nano-banana-pro` 为 `1k`），旧版本 CLI 固定发 2K。需要 2K 时显式传 `--size 2k`。
+
+```bash
+zovii list-models                 # 所有工具：toolId / name / models / default
+zovii list-models ai_image        # 该工具下每个模型一行
+zovii list-models ai_video --refresh   # 强制刷新缓存
+```
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `--refresh` | flag — bypass the local cache and refetch | off |
+
+Output columns (no argument): `toolId`, `name`, `models`, `default`
+Output columns (with tool): `modelId`, `name`, `default`, `minCost`, `options`
+
+`options` 是紧凑摘要，`*` 标注默认值，选项过多时折叠成 `首个…末个(N 项，默认 X)`。
+
+---
+
 ## zovii generate-image \<projectId\>
 
 Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
@@ -110,11 +133,12 @@ Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text | **required** |
-| `--model` | `ws-nano-banana-pro` / `ws-nano-banana-pro-ultra` / `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-pro-260628` / `midjourney-fast` / `ws-gpt-image-2` | `ws-nano-banana-pro` |
-| `--aspect-ratio` | `1:1` / `2:3` / `3:2` / `3:4` / `4:3` / `4:5` / `5:4` / `9:16` / `16:9` / `21:9` | `1:1` |
-| `--size` | `2K` / `4K` | `2K` |
+| `--model` | Determined by the product config — run `zovii list-models ai_image` | product default model |
+| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--quality` | Only for models that expose it (e.g. `ws-gpt-image-2`: `low` / `medium` / `high`) | model default |
 | `--count` | 1–20 | `1` |
-| `--image-input` | asset ID or local path; comma-separated for multiple | — |
+| `--image-input` | asset ID or local path; comma-separated for multiple (max count per the model schema) | — |
 | `--timeout` | seconds | `300` |
 | `--no-wait` | flag — submit and return immediately | off |
 
@@ -129,10 +153,10 @@ Batch text-to-image: submit multiple different prompts in one call; each prompt 
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text, repeatable (1–20 prompts) | **required** |
-| `--model` | `doubao-seedream-4-5-251128` / `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-pro-260628` / `midjourney-fast` | `doubao-seedream-4-5-251128` |
-| `--aspect-ratio` | `1:1` / `2:3` / `3:2` / `3:4` / `4:3` / `4:5` / `5:4` / `9:16` / `16:9` / `21:9` | `1:1` |
-| `--size` | `2K` / `4K` | `2K` |
-| `--image-input` | asset ID or local path; comma-separated, max 10, shared across all prompts | — |
+| `--model` | Determined by the product config — run `zovii list-models ai_image` | product default model |
+| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--image-input` | asset ID or local path; comma-separated, shared across all prompts (max count per the model schema) | — |
 | `--timeout` | seconds | `300` |
 | `--no-wait` | flag — submit and return immediately | off |
 
@@ -147,17 +171,17 @@ Generate an AI video (text-to-video / first-last frame / reference assets).
 | Option | Values | Default |
 |--------|--------|---------|
 | `--prompt` | text | empty |
-| `--model` | `doubao-seedance-2-0-260128` / `doubao-seedance-2-0-fast-260128` / `doubao-seedance-2-0-mini-260615` / `doubao-seedance-1-5-pro-251215` / `kling-o3` / `ws-veo-3.1` / `grok-imagine-video-v1.5` | `doubao-seedance-2-0-260128` |
-| `--ratio` | `16:9` / `9:16` / `1:1` / `4:3` / `3:4` / `21:9` | `16:9` |
-| `--duration` | `8` / `12` | `8` |
-| `--resolution` | `480p` / `720p` / `1080p` | `720p` |
+| `--model` | Determined by the product config — run `zovii list-models ai_video` | product default model |
+| `--ratio` | Determined by the product config — run `zovii list-models ai_video` | model default |
+| `--duration` | Determined by the product config — run `zovii list-models ai_video` | model default |
+| `--resolution` | Determined by the product config — run `zovii list-models ai_video` | model default |
 | `--image-input` | asset ID or local path (first frame) | — |
 | `--end-frame` | asset ID or local path; requires `--image-input` | — |
 | `--ref-image` | asset ID or local path; comma-separated for multiple | — |
 | `--ref-video` | asset ID or local path | — |
 | `--ref-audio` | asset ID or local path; comma-separated for multiple | — |
-| `--keep-original-audio` | flag — preserve audio from `--ref-video` | off |
-| `--no-audio` | flag — generate video without audio | off |
+| `--keep-original-audio` | flag — preserve audio from `--ref-video`. 仅部分模型支持，不支持时报错（运行 `zovii list-models ai_video` 确认） | off |
+| `--no-audio` | flag — generate video without audio. 仅部分模型支持，不支持时报错（运行 `zovii list-models ai_video` 确认） | off |
 | `--timeout` | seconds | `600` |
 | `--no-wait` | flag — submit and return immediately | off |
 
