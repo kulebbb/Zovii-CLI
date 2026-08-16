@@ -310,3 +310,30 @@ test('预估积分 = 单张估价加附加费再乘条数', async () => {
     assert.match(io.stderr, /预估消耗 6 积分/);
   } finally { io.restore(); }
 });
+
+test('gpt-image-2 + 参考图 + 未传 --aspect-ratio → shared_params.aspect_ratio 自动为 auto', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+      '--model', 'ws-gpt-image-2',
+      '--prompt', 'a', '--prompt', 'b',
+      '--image-input', 'asset-1',
+    ]);
+    assert.equal(calls.createBatchTasks[0].shared_params.aspect_ratio, 'auto');
+  } finally { io.restore(); }
+});
+
+test('gpt-image-2 无参考图 → shared_params.aspect_ratio 为默认 1:1', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'batch-generate-image', 'proj-1',
+      '--model', 'ws-gpt-image-2',
+      '--prompt', 'a',
+    ]);
+    assert.equal(calls.createBatchTasks[0].shared_params.aspect_ratio, '1:1');
+  } finally { io.restore(); }
+});

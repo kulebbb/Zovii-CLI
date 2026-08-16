@@ -134,7 +134,7 @@ Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
 |--------|--------|---------|
 | `--prompt` | text | **required** |
 | `--model` | Determined by the product config — run `zovii list-models ai_image` | product default model |
-| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default (`ws-gpt-image-2` with reference images and no explicit value: `auto`) |
 | `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
 | `--quality` | Only for models that expose it (e.g. `ws-gpt-image-2`: `low` / `medium` / `high`) | model default |
 | `--count` | 1–20 | `1` |
@@ -154,7 +154,7 @@ Batch text-to-image: submit multiple different prompts in one call; each prompt 
 |--------|--------|---------|
 | `--prompt` | text, repeatable (1–20 prompts) | **required** |
 | `--model` | Determined by the product config — run `zovii list-models ai_image` | product default model |
-| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default |
+| `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default (`ws-gpt-image-2` with reference images and no explicit value: `auto`) |
 | `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
 | `--image-input` | asset ID or local path; comma-separated, shared across all prompts (max count per the model schema) | — |
 | `--timeout` | seconds | `300` |

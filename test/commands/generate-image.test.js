@@ -344,3 +344,76 @@ test('count=3 时预估积分按张数累计', async () => {
     assert.match(io.stderr, /预估消耗 16.5 积分/);
   } finally { io.restore(); }
 });
+
+// ---------- auto_value_when：gpt-image-2 带参考图时 aspect_ratio 自动为 auto ----------
+
+test('gpt-image-2 + 参考图 + 未传 --aspect-ratio → aspect_ratio 自动为 auto', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', '一只猫',
+      '--model', 'ws-gpt-image-2',
+      '--image-input', 'asset-1',
+    ]);
+    assert.equal(calls.createTask[0].params.aspect_ratio, 'auto');
+  } finally { io.restore(); }
+});
+
+test('gpt-image-2 + 参考图 + 显式 --aspect-ratio 16:9 → 尊重用户值', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', '一只猫',
+      '--model', 'ws-gpt-image-2',
+      '--image-input', 'asset-1',
+      '--aspect-ratio', '16:9',
+    ]);
+    assert.equal(calls.createTask[0].params.aspect_ratio, '16:9');
+  } finally { io.restore(); }
+});
+
+test('gpt-image-2 无参考图 → aspect_ratio 用 schema 默认值 1:1', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', '一只猫',
+      '--model', 'ws-gpt-image-2',
+    ]);
+    assert.equal(calls.createTask[0].params.aspect_ratio, '1:1');
+  } finally { io.restore(); }
+});
+
+test('gpt-image-2 + 参考图 + count=3（batch 路径）→ shared_params.aspect_ratio 为 auto', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', '一只猫',
+      '--model', 'ws-gpt-image-2',
+      '--image-input', 'asset-1',
+      '--count', '3',
+    ]);
+    assert.equal(calls.createBatchTasks[0].shared_params.aspect_ratio, 'auto');
+  } finally { io.restore(); }
+});
+
+test('nano-banana-pro + 参考图 → 无 auto 规则，aspect_ratio 仍是默认 1:1', async () => {
+  const { deps, calls } = fakeDeps();
+  const program = makeProgram(deps);
+  const io = captureIO();
+  try {
+    await program.parseAsync(['node', 'zovii', 'generate-image', 'proj-1',
+      '--prompt', '一只猫',
+      '--model', 'ws-nano-banana-pro',
+      '--image-input', 'asset-1',
+    ]);
+    assert.equal(calls.createTask[0].params.aspect_ratio, '1:1');
+  } finally { io.restore(); }
+});
