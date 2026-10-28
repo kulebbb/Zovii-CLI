@@ -71,6 +71,10 @@ zovii download-asset <assetId>
 | `generate-video <projectId>` | Text-to-video / first-last-frame / reference-based video |
 | `remove-background <projectId> <image>` | Remove background from an image |
 | `upscale-video <projectId> <video>` | Upscale a video to higher resolution |
+| `library list` | List asset library items (`--type`, `--tag`, `--q` keyword, `--pinned`; personal library by default, `--enterprise` for the enterprise library) |
+| `library upload <file>` / `library download <id>` | Upload a local file to the library / download a library item |
+| `library import <projectId> <assetIds>` / `library export <projectId> <libraryIds>` | Save project assets to the library / copy library items into a project |
+| `library tags` / `trash` / `rename` / `tag` / `untag` / `pin` / `unpin` / `delete` / `restore` | Library tags and housekeeping (`delete` moves to the recycle bin; `restore` undoes it) |
 
 Run `zovii <command> --help` for full option lists.
 
@@ -85,6 +89,12 @@ Any command that accepts an asset (`--image-input`, `--ref-video`, `<image>`, `<
 ```bash
 zovii remove-background <projectId> ./my-photo.jpg
 zovii generate-video <projectId> --image-input ./first-frame.png --prompt "zoom out"
+```
+
+Asset library items are referenced as `lib:<libraryAssetId>`; the CLI copies them into the project first:
+
+```bash
+zovii generate-image <projectId> --prompt "same, but blue" --image-input lib:<libraryAssetId>
 ```
 
 ## Output Format

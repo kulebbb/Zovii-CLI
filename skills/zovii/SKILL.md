@@ -1,6 +1,6 @@
 ---
 name: zovii
-description: Use when the user wants to generate AI images or videos, manage assets, organize canvas groups, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video", "canvas group", "画布分组".
+description: Use when the user wants to generate AI images or videos, manage assets, organize canvas groups, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video", "canvas group", "画布分组", "asset library", "资产库", "素材库".
 ---
 
 # zovii CLI
@@ -14,6 +14,7 @@ Load this skill when the user mentions:
 - "upload asset", "download asset", "project assets"
 - "remove background", "upscale video", "upscale"
 - "canvas group", "画布分组", "分组整理资产"
+- "asset library", "资产库", "素材库", "企业素材库"
 
 Full command reference: [references/commands.md](references/commands.md)
 
@@ -62,6 +63,7 @@ These rules apply to every command:
 
 - **No project ID?** Run `zovii list-projects` first and ask the user to pick one.
 - **Local file path as input?** Pass it directly — the CLI auto-uploads it. No need to call `upload-asset` manually.
+- **Asset library item as input?** Pass `lib:<libraryAssetId>` to any reference flag (`--image-input`, `--ref-image`, `--end-frame`, `remove-background <image>` …) — the CLI copies it into the project first. Bare project asset IDs and library IDs are both UUIDs, so never pass a library ID without the `lib:` prefix.
 - **Waiting for results?** Default: wait (omit `--no-wait`). Only go async when the user explicitly requests it.
 - **Output format?** Default: `table`. Add `-f json` when the output will be consumed programmatically.
 - **Timeouts?** Image tasks default to 300 s; video tasks default to 600 s. Use `--timeout <seconds>` for long-running jobs.
@@ -184,3 +186,25 @@ Agent notes:
 - `--assets` only accepts asset IDs (UUID), not local paths — upload first if needed.
 - No group ID? Run `zovii list-groups <projectId>` first and let the user pick.
 - Colors: blue / green / orange / purple / red / yellow / cyan / gray.
+
+### Workflow 6: Asset Library (资产库)
+
+The asset library holds long-lived materials outside any project. Every user has a personal library; enterprise members also share an enterprise library. Library commands default to the personal library — add `--enterprise` for the enterprise one. Library asset IDs (`libraryAssetId`) are **not** project asset IDs.
+
+```
+Browse:          zovii library list [--enterprise] [--type image|video|audio|pdf|markdown|url] [--tag t] [--q keyword] [--pinned] [--limit n]
+Tags:            zovii library tags [--enterprise]
+Upload file:     zovii library upload <local-path> [--tags a,b] [--enterprise]
+Project → lib:   zovii library import <projectId> <assetId,...> [--enterprise]
+Lib → project:   zovii library export <projectId> <libraryAssetId,...>
+Download:        zovii library download <libraryAssetId> [--out <save-path>]
+Organize:        zovii library rename|tag|untag|pin|unpin|delete|restore <libraryAssetId> ...
+Recycle bin:     zovii library trash [--enterprise]
+```
+
+Agent notes:
+- "Use the cat picture from my library as reference" → `zovii -f json library list --q cat --type image`, pick the item, then pass `--image-input lib:<libraryAssetId>` to the generate command. No separate export step needed.
+- `export` / `lib:` refs auto-detect personal vs enterprise library; the copy lands in the project (visible on its canvas).
+- "Save this generated image to the library" → `zovii library import <projectId> <assetId>`.
+- `delete` is a soft delete (goes to the recycle bin); confirm with the user before deleting, and use `restore` to undo.
+- Enterprise library: members can usually read, but renaming/deleting someone else's item may fail with `无权限` — report it to the user, do not retry.

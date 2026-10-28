@@ -21,6 +21,7 @@ import { register as registerCreateGroup } from '../src/commands/create-group.js
 import { register as registerAddToGroup } from '../src/commands/add-to-group.js';
 import { register as registerRenameGroup } from '../src/commands/rename-group.js';
 import { register as registerSetAutoOrganize } from '../src/commands/set-auto-organize.js';
+import { register as registerLibrary } from '../src/commands/library.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -53,5 +54,6 @@ registerCreateGroup(program);
 registerAddToGroup(program);
 registerRenameGroup(program);
 registerSetAutoOrganize(program);
+registerLibrary(program);
 
 program.parse();
