@@ -46,11 +46,11 @@ export function register(program, deps = realDeps) {
     .option('--ratio <ratio>', '画面比例（缺省用模型默认值），取值见 zovii list-models ai_video')
     .option('--duration <s>', '时长秒数（缺省用模型默认值），取值见 zovii list-models ai_video')
     .option('--resolution <res>', '分辨率（缺省用模型默认值），取值见 zovii list-models ai_video')
-    .option('--image-input <ref>', '首帧图 asset ID 或本地路径（可选）', '')
-    .option('--end-frame <ref>', '尾帧图 asset ID 或本地路径（需配合 --image-input）', '')
-    .option('--ref-image <refs>', '参考图 asset ID 或本地路径，多个逗号分隔（可选）', '')
-    .option('--ref-video <ref>', '参考视频 asset ID 或本地路径（可选）', '')
-    .option('--ref-audio <refs>', '参考音频 asset ID 或本地路径，多个逗号分隔（可选）', '')
+    .option('--image-input <ref>', '首帧图 asset ID / 本地路径 / lib:<资产库ID>（可选）', '')
+    .option('--end-frame <ref>', '尾帧图 asset ID / 本地路径 / lib:<资产库ID>（需配合 --image-input）', '')
+    .option('--ref-image <refs>', '参考图 asset ID / 本地路径 / lib:<资产库ID>，多个逗号分隔（可选）', '')
+    .option('--ref-video <ref>', '参考视频 asset ID / 本地路径 / lib:<资产库ID>（可选）', '')
+    .option('--ref-audio <refs>', '参考音频 asset ID / 本地路径 / lib:<资产库ID>，多个逗号分隔（可选）', '')
     .option(
       '--keep-original-audio',
       '保留参考视频原声（仅 --ref-video 时有效；仅部分模型支持，不支持时报错）',

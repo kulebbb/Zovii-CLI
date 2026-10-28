@@ -76,6 +76,10 @@ zovii download-asset <assetId>
 | `add-to-group <projectId> <groupId> --assets id,id` | 给已有分组追加成员资产 |
 | `rename-group <projectId> <groupId> <newName>` | 重命名分组 |
 | `set-auto-organize <projectId> <groupId> <on\|off>` | 开/关分组自动整理 |
+| `library list` | 列出资产库素材（`--type`、`--tag`、`--q` 关键词、`--pinned`；默认个人库，`--enterprise` 切企业库） |
+| `library upload <file>` / `library download <id>` | 本地文件上传到资产库 / 资产库素材下载到本地 |
+| `library import <projectId> <assetIds>` / `library export <projectId> <libraryIds>` | 项目素材收进资产库 / 资产库素材复制进项目 |
+| `library tags` / `trash` / `rename` / `tag` / `untag` / `pin` / `unpin` / `delete` / `restore` | 资产库标签与整理（`delete` 进回收站，可 `restore`） |
 
 执行 `zovii <command> --help` 查看完整参数。
 
@@ -92,6 +96,12 @@ zovii download-asset <assetId>
 ```bash
 zovii remove-background <projectId> ./my-photo.jpg
 zovii generate-video <projectId> --image-input ./first-frame.png --prompt "镜头拉远"
+```
+
+资产库素材写成 `lib:<资产库素材ID>`，CLI 会先把它复制进当前项目再使用：
+
+```bash
+zovii generate-image <projectId> --prompt "同款换成蓝色" --image-input lib:<资产库素材ID>
 ```
 
 ## 输出格式

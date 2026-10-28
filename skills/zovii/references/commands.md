@@ -1,6 +1,6 @@
 # zovii Command Reference
 
-All 19 commands. Global flag: `-f json` / `-f table` (default `table`).
+All 19 top-level commands plus the `library` command group. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
@@ -138,7 +138,7 @@ Generate an AI image (text-to-image or image-to-image). `--prompt` is required.
 | `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
 | `--quality` | Only for models that expose it (e.g. `ws-gpt-image-2`: `low` / `medium` / `high`) | model default |
 | `--count` | 1–20 | `1` |
-| `--image-input` | asset ID or local path; comma-separated for multiple (max count per the model schema) | — |
+| `--image-input` | asset ID, local path or `lib:<libraryAssetId>`; comma-separated for multiple (max count per the model schema) | — |
 | `--timeout` | seconds | `300` |
 | `--no-wait` | flag — submit and return immediately | off |
 
@@ -156,7 +156,7 @@ Batch text-to-image: submit multiple different prompts in one call; each prompt 
 | `--model` | Determined by the product config — run `zovii list-models ai_image` | product default model |
 | `--aspect-ratio` | Determined by the product config — run `zovii list-models ai_image` | model default (`ws-gpt-image-2` with reference images and no explicit value: `auto`) |
 | `--size` | Determined by the product config — run `zovii list-models ai_image` | model default |
-| `--image-input` | asset ID or local path; comma-separated, shared across all prompts (max count per the model schema) | — |
+| `--image-input` | asset ID, local path or `lib:<libraryAssetId>`; comma-separated, shared across all prompts (max count per the model schema) | — |
 | `--timeout` | seconds | `300` |
 | `--no-wait` | flag — submit and return immediately | off |
 
@@ -175,11 +175,11 @@ Generate an AI video (text-to-video / first-last frame / reference assets).
 | `--ratio` | Determined by the product config — run `zovii list-models ai_video` | model default |
 | `--duration` | Determined by the product config — run `zovii list-models ai_video` | model default |
 | `--resolution` | Determined by the product config — run `zovii list-models ai_video` | model default |
-| `--image-input` | asset ID or local path (first frame) | — |
-| `--end-frame` | asset ID or local path; requires `--image-input` | — |
-| `--ref-image` | asset ID or local path; comma-separated for multiple | — |
-| `--ref-video` | asset ID or local path | — |
-| `--ref-audio` | asset ID or local path; comma-separated for multiple | — |
+| `--image-input` | asset ID, local path or `lib:<libraryAssetId>` (first frame) | — |
+| `--end-frame` | asset ID, local path or `lib:<libraryAssetId>`; requires `--image-input` | — |
+| `--ref-image` | asset ID, local path or `lib:<libraryAssetId>`; comma-separated for multiple | — |
+| `--ref-video` | asset ID, local path or `lib:<libraryAssetId>` | — |
+| `--ref-audio` | asset ID, local path or `lib:<libraryAssetId>`; comma-separated for multiple | — |
 | `--keep-original-audio` | flag — preserve audio from `--ref-video`. 仅部分模型支持，不支持时报错（运行 `zovii list-models ai_video` 确认） | off |
 | `--no-audio` | flag — generate video without audio. 仅部分模型支持，不支持时报错（运行 `zovii list-models ai_video` 确认） | off |
 | `--timeout` | seconds | `600` |
@@ -243,7 +243,7 @@ Output columns: `groupId`, `name`, `autoOrganize`, `memberCount`, `color`
 
 Remove the background from an image; returns a transparent-background PNG.
 
-`<image>` accepts: asset ID or local file path.
+`<image>` accepts: asset ID, local file path or `lib:<libraryAssetId>`.
 
 | Option | Default |
 |--------|---------|
@@ -258,7 +258,7 @@ Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `asset
 
 Upscale a video to a higher resolution.
 
-`<video>` accepts: asset ID or local file path.
+`<video>` accepts: asset ID, local file path or `lib:<libraryAssetId>`.
 
 | Option | Values | Default |
 |--------|--------|---------|
@@ -268,3 +268,28 @@ Upscale a video to a higher resolution.
 | `--no-wait` | flag — submit and return immediately | off |
 
 Output columns: `taskId`, `status`, `creditCost`, `assetId`, `assetName`, `assetType`, `fileUrl`, `thumbnailUrl`, `width`, `height`, `duration`
+
+---
+
+## zovii library \<subcommand\>
+
+Asset library (资产库) — cross-project materials. Personal library by default; `--enterprise` switches to the enterprise library (enterprise members only). `<libraryAsset>` arguments accept the bare ID or `lib:<id>`.
+
+Anywhere a command accepts an asset reference (`--image-input`, `--ref-image`, `--ref-video`, `--ref-audio`, `--end-frame`, `remove-background <image>`, `upscale-video <video>`), `lib:<libraryAssetId>` copies that library item into the project first and uses the copy.
+
+| Subcommand | Arguments / options | Notes |
+|------------|---------------------|-------|
+| `list` | `--enterprise`, `--type image\|video\|audio\|pdf\|markdown\|url`, `--tag`, `--q <keyword>`, `--pinned`, `--limit` (default `100`) | |
+| `trash` | same as `list` | items in the recycle bin |
+| `tags` | `--enterprise` | columns: `tag`, `count` |
+| `upload <file>` | `--enterprise`, `--tags a,b` | max 80MB |
+| `import <projectId> <assetIds>` | `--enterprise` | project assets → library; skipped IDs printed to stderr |
+| `export <projectId> <libraryAssetIds>` | — | library → project; personal / enterprise auto-detected. Columns: `libraryAssetId`, `assetId`, `assetName`, `assetType`, `fileUrl`, `width`, `height`, `duration` |
+| `download <libraryAsset>` | `--out <path>` (default: item name in cwd) | columns: `libraryAssetId`, `name`, `type`, `localPath`, `bytes` |
+| `rename <libraryAsset> <name>` | | |
+| `tag <libraryAsset> <tags>` / `untag <libraryAsset> <tags>` | comma-separated tags | |
+| `pin` / `unpin <libraryAsset>` | | |
+| `delete <libraryAsset>` | | soft delete → recycle bin |
+| `restore <libraryAsset>` | | restore from recycle bin |
+
+Output columns (list / trash / upload / import / rename / tag / untag / pin / unpin / delete / restore): `libraryAssetId`, `name`, `type`, `library` (`personal` / `enterprise`), `tags`, `pinned`, `creatorDisplayId`, `fileUrl`, `thumbnailUrl`, `url` (link items only), `width`, `height`, `duration`, `createdAt`

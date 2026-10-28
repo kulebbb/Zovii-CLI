@@ -49,7 +49,7 @@ export function register(program, deps = realDeps) {
     .option('--size <size>', '分辨率（缺省用模型默认值），取值见 zovii list-models ai_image')
     .option('--quality <quality>', '画质（仅部分模型支持），取值见 zovii list-models ai_image')
     .option('--count <n>', '生成数量 1-20', '1')
-    .option('--image-input <refs>', '参考图 asset ID 或本地路径，多个逗号分隔（可选）', '')
+    .option('--image-input <refs>', '参考图 asset ID / 本地路径 / lib:<资产库ID>，多个逗号分隔（可选）', '')
     .option('--timeout <s>', '超时秒数', '300')
     .option('--no-wait', '提交后立即返回 task id，不等待结果')
     .action(async (project, opts) => {

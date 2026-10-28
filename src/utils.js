@@ -17,6 +17,11 @@ const DETAIL_CODE_MESSAGES = {
 
 export function throwHttpError(status, context = '', detail) {
   if (status >= 200 && status < 300) return;
+  // 后端鉴权失败一律 401；带 detail 的 403 是业务无权限（如企业库改他人素材），不能误导用户去重登
+  if (status === 403 && detail) {
+    const msg = typeof detail === 'string' ? detail : (detail.message ?? JSON.stringify(detail));
+    throw new CommandError(`无权限：${msg}`);
+  }
   if (status === 401 || status === 403) {
     throw new AuthRequiredError('登录态已失效，请重新运行 zovii login');
   }
@@ -208,13 +213,22 @@ export async function uploadAsset(token, projectId, filePath, toolType) {
 export async function resolveAssetRef(token, projectId, ref, toolType) {
   const s = String(ref ?? '').trim();
   if (!s) return '';
+  // lib:<id> = 资产库素材：生成接口只认项目素材，先复制进项目再用
+  if (s.startsWith(LIBRARY_REF_PREFIX)) {
+    const libId = s.slice(LIBRARY_REF_PREFIX.length).trim();
+    if (!looksLikeUuid(libId)) {
+      throw new ArgumentError(`"${s}" 不是有效的资产库引用，格式为 lib:<资产库ID>`);
+    }
+    const asset = await exportLibraryAsset(token, projectId, libId);
+    return asset.id;
+  }
   if (isLocalFilePath(s)) {
     const asset = await uploadAsset(token, projectId, s, toolType);
     return asset.id;
   }
   if (!looksLikeUuid(s)) {
     throw new ArgumentError(
-      `"${s}" 既不是有效的 asset id（UUID 形态），也不是本地存在的文件路径`,
+      `"${s}" 既不是有效的 asset id（UUID 形态），也不是本地存在的文件路径或 lib:<资产库ID>`,
     );
   }
   return s;
@@ -316,4 +330,224 @@ export async function resolveAssetSizes(token, assetIds) {
     }
   }
   return out;
+}
+
+// ---------- 资产库（跨项目长期素材库，分个人库 / 企业库） ----------
+
+export const LIBRARY_REF_PREFIX = 'lib:';
+const LIBRARY_PAGE_MAX = 200; // 后端单页上限
+
+// 先读 body 再判状态，让后端 detail 透传（multipart / 二进制请求不走 apiFetch 时用）
+async function checkResponse(resp, context) {
+  if (resp.ok) return;
+  let detail;
+  try {
+    detail = JSON.parse(await resp.text()).detail;
+  } catch {}
+  throwHttpError(resp.status, context, detail);
+}
+
+// 个人库 owner = 本人 user id；企业库 owner = 所属企业 id
+export async function resolveLibraryOwner(token, { enterprise = false } = {}) {
+  const me = await getMe(token);
+  if (!enterprise) return { ownerType: 'user', ownerId: me.id };
+  if (!me?.enterprise_id) throw new ArgumentError('当前账号不是企业成员，不能使用 --enterprise');
+  return { ownerType: 'enterprise', ownerId: me.enterprise_id };
+}
+
+function ownerParams(owner) {
+  return { owner_type: owner.ownerType, owner_id: owner.ownerId };
+}
+
+export async function listLibraryAssets(
+  token,
+  owner,
+  { type, tag, q, pinned = false, trash = false, limit = 100 } = {},
+) {
+  const params = new URLSearchParams(ownerParams(owner));
+  if (type) params.set('type', type);
+  if (tag) params.set('tag', tag);
+  if (q) params.set('q', q);
+  if (pinned) params.set('pinned', 'true');
+  const base = trash ? '/library/trash' : '/library/assets';
+  const out = [];
+  while (out.length < limit) {
+    const size = Math.min(LIBRARY_PAGE_MAX, limit - out.length);
+    params.set('limit', String(size));
+    params.set('offset', String(out.length));
+    const page = await apiFetch(`${base}?${params}`, { token });
+    const items = page?.items ?? [];
+    out.push(...items);
+    if (items.length < size) break;
+  }
+  return out;
+}
+
+export async function listLibraryTags(token, owner) {
+  const data = await apiFetch(`/library/tags?${new URLSearchParams(ownerParams(owner))}`, { token });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function uploadLibraryAsset(token, owner, filePath, { tags = [] } = {}) {
+  if (!existsSync(filePath)) throw new ArgumentError(`文件不存在：${filePath}`);
+  const size = statSync(filePath).size;
+  if (size > MAX_UPLOAD_BYTES) {
+    throw new CommandError(
+      `文件过大（${(size / 1048576).toFixed(1)}MB，超过 80MB 上限），请在网页端上传`,
+    );
+  }
+  const formData = new FormData();
+  formData.append(
+    'file',
+    new Blob([await readFile(filePath)], { type: guessMimeType(filePath) }),
+    basename(filePath),
+  );
+  for (const t of tags) formData.append('tags', t);
+  const resp = await fetch(
+    `${API}/library/assets/upload?${new URLSearchParams(ownerParams(owner))}`,
+    { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData },
+  );
+  await checkResponse(resp, '上传到资产库');
+  const asset = await resp.json();
+  if (!asset?.id) throw new CommandError('上传失败：响应缺少资产库素材 id');
+  return asset;
+}
+
+// 项目素材收进资产库；返回 { items: 新资产库素材[], skipped: 未收入的项目素材 id[] }
+export async function importToLibrary(token, owner, projectId, assetIds) {
+  const data = await apiFetch('/library/assets/import-from-project', {
+    method: 'POST',
+    token,
+    body: { project_id: projectId, asset_ids: assetIds, ...ownerParams(owner) },
+    timeoutMs: 120000,
+  });
+  return { items: data?.items ?? [], skipped: data?.skipped ?? [] };
+}
+
+/**
+ * 资产库素材复制进项目，返回新建的项目素材。
+ * 调用方不必知道素材在哪个库：先试个人库再试企业库——后端对不属于该库的 ID 静默跳过、返回空数组。
+ */
+export async function exportLibraryAsset(token, projectId, libraryAssetId) {
+  const me = await getMe(token);
+  const owners = [{ ownerType: 'user', ownerId: me.id }];
+  if (me?.enterprise_id) owners.push({ ownerType: 'enterprise', ownerId: me.enterprise_id });
+  for (const owner of owners) {
+    const created = await apiFetch('/library/assets/export-to-project', {
+      method: 'POST',
+      token,
+      body: { asset_ids: [libraryAssetId], project_id: projectId, ...ownerParams(owner) },
+      timeoutMs: 60000,
+    });
+    if (Array.isArray(created) && created[0]?.id) return created[0];
+  }
+  throw new CommandError(`资产库素材不存在或已删除：${libraryAssetId}`);
+}
+
+function safeFileName(name) {
+  return String(name ?? '').replace(/[\\/]/g, '_').trim();
+}
+
+// 只看 URL 最后一段路径里的扩展名（同后端 _asset_ext），域名和 query 里的点不算
+export function urlExtension(url) {
+  const last = new URL(url).pathname.split('/').pop() ?? '';
+  return last.includes('.') ? last.split('.').pop().toLowerCase() : '';
+}
+
+function withExtension(name, ext) {
+  const safe = safeFileName(name);
+  if (!ext || safe.toLowerCase().endsWith(`.${ext}`)) return safe;
+  return `${safe}.${ext}`;
+}
+
+function dispositionFileName(header) {
+  const m = /filename\*=UTF-8''([^;]+)/i.exec(header ?? '');
+  if (!m) return '';
+  try {
+    return safeFileName(decodeURIComponent(m[1]));
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * 下载资产库素材。后端 /download 有两种返回：
+ * - 图片且用户关了 AI 水印 → 直接回剥离元数据后的字节，文件名在 Content-Disposition
+ * - 其余 → 302 到 COS 直链；手动跟随，避免把登录 token 带去第三方域名
+ * 成功后再调 mark-downloaded 记一条下载动态，并顺带拿到素材名用作默认文件名。
+ */
+export async function downloadLibraryAsset(token, libraryAssetId, outPath) {
+  const resp = await fetch(`${API}/library/assets/${libraryAssetId}/download`, {
+    headers: { Authorization: `Bearer ${token}` },
+    redirect: 'manual',
+  });
+  const location = resp.status >= 300 && resp.status < 400 ? resp.headers.get('location') : null;
+  let fileResp = resp;
+  if (location) {
+    fileResp = await fetch(location);
+    if (!fileResp.ok) throw new CommandError(`下载失败：HTTP ${fileResp.status}`);
+  } else {
+    await checkResponse(resp, '下载资产库素材');
+  }
+  const buf = Buffer.from(await fileResp.arrayBuffer());
+  const asset = await apiFetch(`/library/assets/${libraryAssetId}/mark-downloaded`, {
+    method: 'POST',
+    token,
+  });
+  let target = outPath;
+  if (!target) {
+    target =
+      dispositionFileName(resp.headers.get('content-disposition')) ||
+      withExtension(asset?.name || libraryAssetId, location ? urlExtension(location) : '');
+  }
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, buf);
+  return { asset, localPath: target, bytes: buf.length };
+}
+
+export async function renameLibraryAsset(token, id, name) {
+  return apiFetch(`/library/assets/${id}`, { method: 'PATCH', token, body: { name } });
+}
+
+export async function addLibraryTag(token, id, tag) {
+  return apiFetch(`/library/assets/${id}/tags`, { method: 'POST', token, body: { tag } });
+}
+
+export async function removeLibraryTag(token, id, tag) {
+  return apiFetch(`/library/assets/${id}/tags/${encodeURIComponent(tag)}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function setLibraryPinned(token, id, pinned) {
+  return apiFetch(`/library/assets/${id}/${pinned ? 'pin' : 'unpin'}`, { method: 'POST', token });
+}
+
+// 软删除：进回收站，可 restore
+export async function deleteLibraryAsset(token, id) {
+  return apiFetch(`/library/assets/${id}`, { method: 'DELETE', token });
+}
+
+export async function restoreLibraryAsset(token, id) {
+  return apiFetch(`/library/assets/${id}/restore`, { method: 'POST', token });
+}
+
+export function libraryRow(asset) {
+  return {
+    libraryAssetId: asset.id ?? '',
+    name: asset.name ?? '',
+    type: asset.type ?? '',
+    library: asset.owner_type === 'enterprise' ? 'enterprise' : 'personal',
+    tags: asset.tags ?? [],
+    pinned: Boolean(asset.is_pinned),
+    creatorDisplayId: asset.creator_display_id ?? '',
+    fileUrl: asset.file_url ?? '',
+    thumbnailUrl: asset.thumbnail_url ?? '',
+    url: asset.url ?? '',
+    width: asset.metadata_width ?? null,
+    height: asset.metadata_height ?? null,
+    duration: asset.metadata_duration ?? null,
+    createdAt: asset.created_at ?? '',
+  };
 }

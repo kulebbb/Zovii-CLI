@@ -48,7 +48,7 @@ export function register(program, deps = realDeps) {
     .option('--model <model>', '模型 id（缺省用产品默认模型），运行 zovii list-models ai_image 查看')
     .option('--aspect-ratio <ratio>', '宽高比（缺省用模型默认值），取值见 zovii list-models ai_image')
     .option('--size <size>', '分辨率（缺省用模型默认值），取值见 zovii list-models ai_image')
-    .option('--image-input <refs>', '参考图 asset ID 或本地路径，逗号分隔，所有 prompt 共用（可选）', '')
+    .option('--image-input <refs>', '参考图 asset ID / 本地路径 / lib:<资产库ID>，逗号分隔，所有 prompt 共用（可选）', '')
     .option('--timeout <s>', '超时秒数', '300')
     .option('--no-wait', '提交后立即返回 task id，不等待结果')
     .action(async (project, opts) => {
