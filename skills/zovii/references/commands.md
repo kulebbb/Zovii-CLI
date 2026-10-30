@@ -1,6 +1,6 @@
 # zovii Command Reference
 
-All 19 top-level commands plus the `library` command group. Global flag: `-f json` / `-f table` (default `table`).
+All 22 top-level commands plus the `library` command group. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
@@ -293,3 +293,40 @@ Anywhere a command accepts an asset reference (`--image-input`, `--ref-image`, `
 | `restore <libraryAsset>` | | restore from recycle bin |
 
 Output columns (list / trash / upload / import / rename / tag / untag / pin / unpin / delete / restore): `libraryAssetId`, `name`, `type`, `library` (`personal` / `enterprise`), `tags`, `pinned`, `creatorDisplayId`, `fileUrl`, `thumbnailUrl`, `url` (link items only), `width`, `height`, `duration`, `createdAt`
+
+---
+
+## zovii plans
+
+查看订阅套餐与积分包价格（实时从服务端拉取，积分包价格已按当前账号是否会员算好），stderr 附带当前积分余额。需登录。
+
+Output columns: `type` (`subscription` / `credit_pack`), `productId`, `name`, `monthlyPrice`, `yearlyPrice`, `monthlyCredits`, `price`, `credits`, `validityDays`, `approxImages`, `note`
+
+金额：`-f json` 为元（数字），table 为 `¥` 字符串。
+
+---
+
+## zovii buy \<productId\>
+
+下单并发起微信扫码支付。`productId` 取自 `zovii plans`。终端（TTY）显示字符二维码，同时保存 PNG；默认轮询到积分到账为止。
+
+| Option | Values | Default |
+|--------|--------|---------|
+| `--yearly` | flag — subscription billed yearly (subscriptions only) | monthly |
+| `--coupon` | coupon code | — |
+| `--qr-out` | PNG path for the QR code | `<系统临时目录>/zovii-pay-<orderId>.png` |
+| `--no-wait` | flag — return right after the QR code is ready | off |
+| `--timeout` | seconds to wait for payment | until the order expires |
+
+Output columns: `orderId`, `amount`, `status` (`pending` / `fulfilled`), `expiresAt`, `qrPath`, `balance`, `product`
+
+全额抵扣的折扣券会直接到账，不出二维码。同一商品、同一折扣券重复执行会复用未支付订单（换券会新建订单）。等待超时时若订单已是 `paid`，提示稍后用 `zovii order` 确认，勿重复购买。
+
+---
+
+## zovii order \<orderId\>
+
+查询订单状态：`pending` 待支付 / `paid` 已付款、到账中 / `fulfilled` 已到账 / `cancelled` 已取消 / `expired` 已过期。
+
+Output columns: `orderId`, `productId`, `amount`, `status`, `expiresAt` (pending only), `paidAt`, `balance` (fulfilled only), `statusText`
+

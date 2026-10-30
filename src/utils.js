@@ -26,7 +26,7 @@ export function throwHttpError(status, context = '', detail) {
     throw new AuthRequiredError('登录态已失效，请重新运行 zovii login');
   }
   if (status === 402) {
-    throw new CommandError('积分不足，请前往 https://zovii.studio/pricing 充值');
+    throw new CommandError('积分不足，运行 zovii plans 查看套餐与积分包，或前往 https://zovii.studio/pricing 充值');
   }
   if (status === 404) {
     throw new CommandError(`资源不存在${context ? `（${context}）` : ''}，请检查 ID 是否正确`);
@@ -550,4 +550,47 @@ export function libraryRow(asset) {
     duration: asset.metadata_duration ?? null,
     createdAt: asset.created_at ?? '',
   };
+}
+
+// ---------- 套餐 / 积分包 / 订单（金额单位均为「分」） ----------
+
+export async function listPlans(token) {
+  const data = await apiFetch('/pricing/plans', { token });
+  return Array.isArray(data) ? data : [];
+}
+
+// 价格随会员身份变化（price 字段已按当前用户取好），必须带 token
+export async function listPacks(token) {
+  const data = await apiFetch('/pricing/packs', { token });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function getBalance(token) {
+  const data = await apiFetch('/credits/balance', { token });
+  return data?.balance ?? null;
+}
+
+// 后端会复用同商品同券的未过期待支付订单，重复调用不会多建单
+export async function createOrder(token, { orderType, productId, billingCycle, couponCode }) {
+  const body = { order_type: orderType, product_id: productId };
+  if (billingCycle) body.billing_cycle = billingCycle;
+  if (couponCode) body.coupon_code = couponCode;
+  const order = await apiFetch('/pricing/create-order', { method: 'POST', token, body });
+  if (!order?.order_id) throw new CommandError('下单失败：响应缺少 order_id');
+  return order;
+}
+
+// 返回 { order_id, code_url, expires_at }；code_url 是 weixin:// 链接，只能转成二维码让手机微信扫
+export async function createWechatQrcode(token, orderId) {
+  const data = await apiFetch('/payments/wechat/qrcode', {
+    method: 'POST',
+    token,
+    body: { order_id: orderId },
+  });
+  if (!data?.code_url) throw new CommandError('获取支付二维码失败：响应缺少 code_url');
+  return data;
+}
+
+export async function getOrderStatus(token, orderId) {
+  return apiFetch(`/orders/${encodeURIComponent(orderId)}/status`, { token });
 }

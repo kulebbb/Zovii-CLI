@@ -1,6 +1,6 @@
 ---
 name: zovii
-description: Use when the user wants to generate AI images or videos, manage assets, organize canvas groups, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video", "canvas group", "画布分组", "asset library", "资产库", "素材库".
+description: Use when the user wants to generate AI images or videos, manage assets, organize canvas groups, or work with Zovii Studio projects from the command line. Triggers include "zovii", "generate image", "batch generate images", "generate video", "AI image", "AI video", "upload asset", "download asset", "remove background", "upscale video", "canvas group", "画布分组", "asset library", "资产库", "素材库", "pricing", "plans", "buy credits", "套餐", "充值", "积分不足".
 ---
 
 # zovii CLI
@@ -15,6 +15,7 @@ Load this skill when the user mentions:
 - "remove background", "upscale video", "upscale"
 - "canvas group", "画布分组", "分组整理资产"
 - "asset library", "资产库", "素材库", "企业素材库"
+- "pricing", "plans", "buy credits", "套餐", "充值", "买积分", "积分不足"
 
 Full command reference: [references/commands.md](references/commands.md)
 
@@ -208,3 +209,20 @@ Agent notes:
 - "Save this generated image to the library" → `zovii library import <projectId> <assetId>`.
 - `delete` is a soft delete (goes to the recycle bin); confirm with the user before deleting, and use `restore` to undo.
 - Enterprise library: members can usually read, but renaming/deleting someone else's item may fail with `无权限` — report it to the user, do not retry.
+
+### Workflow 7: Plans & Payment (套餐与充值)
+
+```
+Prices + balance:  zovii plans
+Buy:               zovii buy <productId> [--yearly] [--coupon <code>] [--qr-out <path>] [--no-wait] [--timeout <sec>]
+Order status:      zovii order <orderId>
+```
+
+Payment is WeChat Pay only: the user must scan the QR code with their phone. You cannot complete a payment yourself.
+
+Agent notes:
+- **Never start `buy` on your own.** Run it only after the user has explicitly chosen a product (and billing cycle for subscriptions) in this conversation. "积分不足" errors → run `zovii plans`, show the options, and let the user decide.
+- `productId` comes from `zovii plans` (e.g. `starter`, `pack_100`) — never guess. Prices come from the server; quote them from `plans` output, not from memory.
+- Subscriptions default to monthly; add `--yearly` only when the user asks for yearly. Credit packs have no billing cycle.
+- Agent flow: `zovii -f json buy <productId> --no-wait` → send the PNG at `qrPath` to the user (the terminal QR is not shown in non-TTY runs) → after the user says they paid, run `zovii order <orderId>` until `status` is `fulfilled` (`paid` = payment received, credits still being granted).
+- Re-running `buy` for the same product with the same coupon (or none) reuses the unpaid order and QR code; a different coupon creates a new order. If `order` shows `paid`, payment is in — wait and re-check, never buy again. Orders expire (see `expiresAt`); after that, run `buy` again.
