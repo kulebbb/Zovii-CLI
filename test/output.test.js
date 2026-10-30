@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { printOutput } from '../src/output.js';
+import { printOutput, displayWidth } from '../src/output.js';
 
 function capture(fn) {
   const lines = [];
@@ -66,3 +66,27 @@ test('table 格式跳过全为 null 的列', () => {
   );
   assert.ok(!out.includes('width'), '全 null 列不应出现');
 });
+
+test('displayWidth：中文 / 全角 / emoji 计两格，ASCII 计一格', () => {
+  assert.equal(displayWidth('abc'), 3);
+  assert.equal(displayWidth('积分包'), 6);
+  assert.equal(displayWidth('Pro（年付）'), 3 + 8);
+  assert.equal(displayWidth('🎨'), 2);
+});
+
+test('table 格式含中文时各列按显示宽度对齐', () => {
+  const out = capture(() =>
+    printOutput(
+      [{ name: '猫咪海报', type: 'image' }, { name: 'cat', type: 'video' }],
+      ['name', 'type'],
+      'table',
+    ),
+  );
+  // 第二列在每行的起始显示列应一致
+  const starts = out.split('\n').filter((l) => !l.startsWith('─')).map((l) => {
+    const idx = l.search(/(type|image|video)/);
+    return displayWidth(l.slice(0, idx));
+  });
+  assert.equal(new Set(starts).size, 1);
+});
+
