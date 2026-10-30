@@ -108,7 +108,7 @@ Then stop and wait for the user's next request. From this point on, follow the w
 | `command not found: npx` | Node < 5.2 or broken install | Reinstall Node 18+ |
 | `EACCES` during `npm install -g` | Permission on system npm prefix | `sudo` or switch to nvm |
 | `登录态已失效` / `Authentication required` | Token expired or invalid | Re-run `zovii login` (Step 4) |
-| `积分不足` / `Insufficient credits` | Out of credits | Direct user to https://zovii.studio/pricing |
+| `积分不足` / `Insufficient credits` | Out of credits | Run `zovii plans` to show options; after the user picks one, `zovii buy <productId> --no-wait` for a QR code; or direct them to https://zovii.studio/pricing |
 | `请求过于频繁` / `Too many requests` | Rate limited | Wait 60s and retry |
 | Skill not auto-discovered by agent | Agent doesn't read `~/.agents/skills/` | Restart the agent / check agent docs |
 

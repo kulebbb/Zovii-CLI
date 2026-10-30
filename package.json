@@ -14,7 +14,8 @@
     "src/"
   ],
   "dependencies": {
-    "commander": "^12"
+    "commander": "^12",
+    "qrcode": "^1.5.4"
   },
   "engines": {
     "node": ">=18"

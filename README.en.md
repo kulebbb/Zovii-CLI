@@ -75,6 +75,9 @@ zovii download-asset <assetId>
 | `library upload <file>` / `library download <id>` | Upload a local file to the library / download a library item |
 | `library import <projectId> <assetIds>` / `library export <projectId> <libraryIds>` | Save project assets to the library / copy library items into a project |
 | `library tags` / `trash` / `rename` / `tag` / `untag` / `pin` / `unpin` / `delete` / `restore` | Library tags and housekeeping (`delete` moves to the recycle bin; `restore` undoes it) |
+| `plans` | Show subscription plans, credit pack prices and your current balance |
+| `buy <productId>` | Buy a plan / credit pack via WeChat Pay: shows a QR code in the terminal, saves it as PNG, and waits until credited by default (`--yearly`, `--coupon <code>`, `--no-wait` to return right after the QR code) |
+| `order <orderId>` | Check an order's payment status |
 
 Run `zovii <command> --help` for full option lists.
 
