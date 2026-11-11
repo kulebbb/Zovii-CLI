@@ -1,6 +1,6 @@
 # zovii Command Reference
 
-All 22 top-level commands plus the `library` command group. Global flag: `-f json` / `-f table` (default `table`).
+All 23 top-level commands plus the `library` command group. Global flag: `-f json` / `-f table` (default `table`).
 
 ---
 
@@ -296,9 +296,25 @@ Output columns (list / trash / upload / import / rename / tag / untag / pin / un
 
 ---
 
+## zovii balance
+
+查看当前账号的积分余额：个人积分余额，以及（仅企业成员）本人的企业可用额度。需登录。
+
+Output columns: `personalBalance`, `enterpriseId`, `enterpriseBalance`
+
+- `personalBalance`：个人积分池余额，`zovii buy` 充值的积分进这里。
+- `enterpriseId` / `enterpriseBalance`：当前用户所属企业的企业 ID，以及企业管理员分配给**本人**、尚未花掉的企业额度。**不含企业池总余额**，管理员说公司池还有多少与此无关。
+- 非企业成员：table 模式企业两列整列隐藏；`-f json` 仍返回三个字段，`enterpriseId` / `enterpriseBalance` 为 `null`。
+- 企业余额查询失败只在 stderr 提示「已隐藏企业列」，个人余额照常输出；若这两次请求之间登录态失效，则照常报鉴权错误（exit 1）。
+- 企业额度只在企业项目（`create-project --type enterprise`）里被消耗；`create-project` 默认建的个人项目扣个人积分。网页端另开了项目积分池的项目扣该池余额，CLI 不能给项目池充值，402 会提示去网页端操作。
+
+金额是积分，不是人民币；查套餐价格用 `zovii plans`。
+
+---
+
 ## zovii plans
 
-查看订阅套餐与积分包价格（实时从服务端拉取，积分包价格已按当前账号是否会员算好），stderr 附带当前积分余额。需登录。
+查看订阅套餐与积分包价格（实时从服务端拉取，积分包价格已按当前账号是否会员算好），stderr 附带当前**个人**积分余额（企业额度见 `zovii balance`）。需登录。
 
 Output columns: `type` (`subscription` / `credit_pack`), `productId`, `name`, `monthlyPrice`, `yearlyPrice`, `monthlyCredits`, `price`, `credits`, `validityDays`, `approxImages`, `note`
 
@@ -318,7 +334,7 @@ Output columns: `type` (`subscription` / `credit_pack`), `productId`, `name`, `m
 | `--no-wait` | flag — return right after the QR code is ready | off |
 | `--timeout` | seconds to wait for payment | until the order expires |
 
-Output columns: `orderId`, `amount`, `status` (`pending` / `fulfilled`), `expiresAt`, `qrPath`, `balance`, `product`
+Output columns: `orderId`, `amount`, `status` (`pending` / `fulfilled`), `expiresAt`, `qrPath`, `balance` (个人积分), `product`
 
 全额抵扣的折扣券会直接到账，不出二维码。同一商品、同一折扣券重复执行会复用未支付订单（换券会新建订单）。等待超时时若订单已是 `paid`，提示稍后用 `zovii order` 确认，勿重复购买。
 
@@ -328,5 +344,5 @@ Output columns: `orderId`, `amount`, `status` (`pending` / `fulfilled`), `expire
 
 查询订单状态：`pending` 待支付 / `paid` 已付款、到账中 / `fulfilled` 已到账 / `cancelled` 已取消 / `expired` 已过期。
 
-Output columns: `orderId`, `productId`, `amount`, `status`, `expiresAt` (pending only), `paidAt`, `balance` (fulfilled only), `statusText`
+Output columns: `orderId`, `productId`, `amount`, `status`, `expiresAt` (pending only), `paidAt`, `balance` (fulfilled only, 个人积分), `statusText`
 

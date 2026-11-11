@@ -50,7 +50,7 @@ export function packRow(pack, fmt) {
 export function register(program, deps = realDeps) {
   program
     .command('plans')
-    .description('查看订阅套餐、积分包价格与当前积分余额')
+    .description('查看订阅套餐、积分包价格与当前个人积分余额')
     .action(async () => {
       const fmt = program.opts().format;
       try {
@@ -60,7 +60,7 @@ export function register(program, deps = realDeps) {
         printOutput(rows, COLUMNS, fmt);
         // 余额只是附加信息，拉取失败不影响价格展示；走 stderr 保持 stdout 为纯数据
         const balance = await deps.getBalance(token).catch(() => null);
-        if (balance !== null) deps.log(`当前积分余额：${balance}`);
+        if (balance !== null) deps.log(`当前个人积分余额：${balance}`);
         deps.log('购买：zovii buy <productId>（订阅默认月付，年付加 --yearly）');
       } catch (err) {
         handleError(err);

@@ -108,7 +108,7 @@ zovii list-projects
 | `command not found: npx` | Node < 5.2 或环境坏了 | 重装 Node 18+ |
 | `npm install -g` 报 `EACCES` | 系统 npm prefix 没权限 | 用 `sudo` 或换成 nvm |
 | `登录态已失效` / `Authentication required` | token 过期或失效 | 重跑 `zovii login`（步骤 4） |
-| `积分不足` / `Insufficient credits` | 积分用完 | 运行 `zovii plans` 展示套餐，用户选定后 `zovii buy <productId> --no-wait` 出码；或引导去 https://zovii.studio/pricing |
+| `积分不足` / `Insufficient credits` | 积分用完（企业项目里则是企业积分用完） | 看 CLI 的错误文案分口径：写着「企业积分不足」→ 让用户找企业管理员分配，**不要**引导充值；写着「项目积分不足」→ 到 https://zovii.studio 网页端给该项目积分池充值；只写「积分不足」→ 运行 `zovii plans` 展示套餐，用户选定后 `zovii buy <productId> --no-wait` 出码，或引导去 https://zovii.studio/pricing。要看具体余额可跑 `zovii balance` |
 | `请求过于频繁` / `Too many requests` | 触发限流 | 等 60 秒再试 |
 | Skill 没被 agent 自动识别 | agent 没扫 `~/.agents/skills/` | 重启 agent / 查 agent 文档 |
 

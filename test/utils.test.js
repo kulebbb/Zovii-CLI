@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { apiFetch, throwHttpError } from '../src/utils.js';
+import { apiFetch, getEnterpriseBalance, throwHttpError } from '../src/utils.js';
 
 const resp = (status, bodyText) => ({
   status,
@@ -19,6 +19,63 @@ test('throwHttpError: 401/403/402/404/429 分支保持不变', () => {
   assert.throws(() => throwHttpError(402, '/x'), /积分不足/);
   assert.throws(() => throwHttpError(404, '/x'), /资源不存在/);
   assert.throws(() => throwHttpError(429, '/x'), /请求过于频繁/);
+});
+
+test('throwHttpError: 402 个人积分不足带 need/have 数字，并引导看余额', () => {
+  assert.throws(
+    () => throwHttpError(402, '/tasks', { code: 'insufficient_credits', params: { need: 5, have: 2 } }),
+    (err) => {
+      assert.match(err.message, /^积分不足（本次需 5，可用 2）/);
+      assert.match(err.message, /zovii balance/);
+      assert.match(err.message, /zovii plans/);
+      return true;
+    },
+  );
+});
+
+test('throwHttpError: 402 企业积分不足走企业管理员，不引导充值', () => {
+  assert.throws(
+    () =>
+      throwHttpError(402, '/tasks', {
+        code: 'insufficient_credits',
+        scope: 'enterprise',
+        params: { need: 5, have: 0 },
+      }),
+    (err) => {
+      assert.match(err.message, /^企业积分不足（本次需 5，可用 0）/);
+      assert.match(err.message, /企业管理员/);
+      assert.doesNotMatch(err.message, /pricing/);
+      assert.doesNotMatch(err.message, /zovii plans/);
+      return true;
+    },
+  );
+});
+
+test('throwHttpError: 402 项目积分池不足引导去网页端，不引导买套餐', () => {
+  assert.throws(
+    () =>
+      throwHttpError(402, '/tasks', {
+        code: 'insufficient_project_credits',
+        params: { need: 10, have: 3 },
+      }),
+    (err) => {
+      assert.match(err.message, /^项目积分不足（本次需 10，可用 3）/);
+      assert.match(err.message, /zovii\.studio 网页端/);
+      assert.doesNotMatch(err.message, /zovii plans/);
+      assert.doesNotMatch(err.message, /pricing/);
+      return true;
+    },
+  );
+});
+
+test('throwHttpError: 402 detail 缺 params 时不编造数字', () => {
+  assert.throws(
+    () => throwHttpError(402, '/tasks', { code: 'insufficient_credits' }),
+    (err) => {
+      assert.match(err.message, /^积分不足，/);
+      return true;
+    },
+  );
 });
 
 test('throwHttpError: 400 已知 code 转中文并挂 err.code', () => {
@@ -141,4 +198,57 @@ test('apiFetch: 请求头与 URL 正确', async () => {
   assert.equal(seen.opts.headers.Authorization, 'Bearer tk');
   assert.equal(seen.opts.headers['Content-Type'], 'application/json');
   assert.equal(seen.opts.body, '{"a":1}');
+});
+
+// ---------- getEnterpriseBalance ----------
+
+// apiFetch 默认用全局 fetch，测试里临时替换掉，锁住路径与字段映射
+function stubFetch(handler) {
+  const orig = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url, opts });
+    return handler(url, opts);
+  };
+  return { calls, restore: () => { globalThis.fetch = orig; } };
+}
+
+test('getEnterpriseBalance: 命中 /enterprise/me/balance 并映射字段', async () => {
+  const stub = stubFetch(() => resp(200, JSON.stringify({ enterprise_id: 'ent-1', balance: 200 })));
+  try {
+    const result = await getEnterpriseBalance('tk');
+    assert.deepEqual(result, { enterpriseId: 'ent-1', balance: 200 });
+    assert.equal(stub.calls[0].url, 'https://zovii.studio/api/v1/enterprise/me/balance');
+    assert.equal(stub.calls[0].opts.headers.Authorization, 'Bearer tk');
+  } finally {
+    stub.restore();
+  }
+});
+
+test('getEnterpriseBalance: 非企业成员 enterpriseId 为 null、额度为 0', async () => {
+  const stub = stubFetch(() => resp(200, JSON.stringify({ enterprise_id: null, balance: 0 })));
+  try {
+    assert.deepEqual(await getEnterpriseBalance('tk'), { enterpriseId: null, balance: 0 });
+  } finally {
+    stub.restore();
+  }
+});
+
+test('getEnterpriseBalance: 响应缺 balance 时报错，不伪造 0', async () => {
+  const stub = stubFetch(() => resp(200, JSON.stringify({ enterprise_id: 'ent-1' })));
+  try {
+    await assert.rejects(getEnterpriseBalance('tk'), {
+      name: 'CommandError',
+      message: /响应缺少 balance/,
+    });
+  } finally {
+    stub.restore();
+  }
+});
+
+test('throwHttpError: 402 detail 是字符串时安全回落', () => {
+  assert.throws(() => throwHttpError(402, '/tasks', 'insufficient credits'), (err) => {
+    assert.match(err.message, /^积分不足，/);
+    return true;
+  });
 });

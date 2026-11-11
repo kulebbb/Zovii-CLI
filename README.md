@@ -80,7 +80,8 @@ zovii download-asset <assetId>
 | `library upload <file>` / `library download <id>` | 本地文件上传到资产库 / 资产库素材下载到本地 |
 | `library import <projectId> <assetIds>` / `library export <projectId> <libraryIds>` | 项目素材收进资产库 / 资产库素材复制进项目 |
 | `library tags` / `trash` / `rename` / `tag` / `untag` / `pin` / `unpin` / `delete` / `restore` | 资产库标签与整理（`delete` 进回收站，可 `restore`） |
-| `plans` | 查看订阅套餐、积分包价格与当前积分余额 |
+| `balance` | 查看个人积分余额与企业可用额度（企业成员；企业额度为企业管理员分配给本人的部分，不含企业池总余额） |
+| `plans` | 查看订阅套餐、积分包价格与当前个人积分余额 |
 | `buy <productId>` | 购买套餐 / 积分包：微信扫码支付，终端显示二维码并保存 PNG，默认等到账（`--yearly` 年付，`--coupon <code>` 折扣券，`--no-wait` 出码即返回） |
 | `order <orderId>` | 查询订单支付状态 |
 
