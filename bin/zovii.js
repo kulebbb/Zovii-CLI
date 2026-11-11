@@ -22,6 +22,7 @@ import { register as registerAddToGroup } from '../src/commands/add-to-group.js'
 import { register as registerRenameGroup } from '../src/commands/rename-group.js';
 import { register as registerSetAutoOrganize } from '../src/commands/set-auto-organize.js';
 import { register as registerLibrary } from '../src/commands/library.js';
+import { register as registerBalance } from '../src/commands/balance.js';
 import { register as registerPlans } from '../src/commands/plans.js';
 import { register as registerBuy } from '../src/commands/buy.js';
 import { register as registerOrder } from '../src/commands/order.js';
@@ -58,6 +59,7 @@ registerAddToGroup(program);
 registerRenameGroup(program);
 registerSetAutoOrganize(program);
 registerLibrary(program);
+registerBalance(program);
 registerPlans(program);
 registerBuy(program);
 registerOrder(program);

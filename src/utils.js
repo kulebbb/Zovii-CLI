@@ -15,6 +15,15 @@ const DETAIL_CODE_MESSAGES = {
   duration_unavailable: '该模型不支持所选时长',
 };
 
+// 402 的 detail.params = { need, have }（建任务前预检与扣减路径都会下发）；字段缺失时留空，不编造数字
+function shortfallText(detail) {
+  const params = detail && typeof detail === 'object' ? detail.params : undefined;
+  const need = params?.need;
+  const have = params?.have;
+  if (typeof need !== 'number' || typeof have !== 'number') return '';
+  return `（本次需 ${need}，可用 ${have}）`;
+}
+
 export function throwHttpError(status, context = '', detail) {
   if (status >= 200 && status < 300) return;
   // 后端鉴权失败一律 401；带 detail 的 403 是业务无权限（如企业库改他人素材），不能误导用户去重登
@@ -26,7 +35,22 @@ export function throwHttpError(status, context = '', detail) {
     throw new AuthRequiredError('登录态已失效，请重新运行 zovii login');
   }
   if (status === 402) {
-    throw new CommandError('积分不足，运行 zovii plans 查看套餐与积分包，或前往 https://zovii.studio/pricing 充值');
+    // 后端 402 分三种口径：企业项目带 scope=enterprise；项目积分池用 code=insufficient_project_credits；
+    // 个人池用 code=insufficient_credits。只有个人池能靠充值解决，不能一律引导去充值
+    const shortfall = shortfallText(detail);
+    if (detail?.scope === 'enterprise') {
+      throw new CommandError(
+        `企业积分不足${shortfall}，请联系企业管理员分配，或运行 zovii balance 查看余额`,
+      );
+    }
+    if (detail?.code === 'insufficient_project_credits') {
+      throw new CommandError(
+        `项目积分不足${shortfall}，请到 zovii.studio 网页端为该项目的积分池充值`,
+      );
+    }
+    throw new CommandError(
+      `积分不足${shortfall}，运行 zovii balance 查看余额、zovii plans 查看套餐与积分包，或前往 https://zovii.studio/pricing 充值`,
+    );
   }
   if (status === 404) {
     throw new CommandError(`资源不存在${context ? `（${context}）` : ''}，请检查 ID 是否正确`);
@@ -568,6 +592,17 @@ export async function listPacks(token) {
 export async function getBalance(token) {
   const data = await apiFetch('/credits/balance', { token });
   return data?.balance ?? null;
+}
+
+// 企业成员本人的可用企业额度（管理员分配给 ta、尚未花掉的部分），不含企业池总额。
+// 非企业成员后端返回 { enterprise_id: null, balance: 0 }，此时 enterpriseId 为 null。
+export async function getEnterpriseBalance(token) {
+  const data = await apiFetch('/enterprise/me/balance', { token });
+  // 契约破缺时抛错而不是记 0：显示「企业额度 0」比查不到更误导
+  if (typeof data?.balance !== 'number') {
+    throw new CommandError('查询企业余额失败：响应缺少 balance');
+  }
+  return { enterpriseId: data.enterprise_id ?? null, balance: data.balance };
 }
 
 // 后端会复用同商品同券的未过期待支付订单，重复调用不会多建单
